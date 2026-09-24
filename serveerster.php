@@ -264,6 +264,9 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
         .rekening-totaal { display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid #e0d5cb; margin-top: 4px; padding-top: 5px; }
         .btn-geluid { background: #8e44ad; color: white; border: none; cursor: pointer; margin-right: 5px; font-family: inherit; }
         .btn-geluid.uit { background: #7f8c8d; }
+        .btn-bon { background: white; color: #1f4e8c; border: 2px solid #1f4e8c; }
+        .bon-tag { background: #eef4fb; color: #1f4e8c; padding: 6px 8px; border-radius: 6px; font-size: 0.85rem !important; }
+        .bon-tag.papier { background: #fff8e1; color: #7d5a00; }
         .btn-verlaten { background: white; color: #c0392b; border: 2px solid #c0392b; }
         .opmerking-tag {
             background: #fff3cd; border-left: 4px solid #f39c12; color: #7d5a00;
@@ -305,6 +308,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
             .orders-raster { grid-template-columns: 1fr; }
         }
     </style>
+    <script src="taal.js" defer></script>
 </head>
 <body>
 
@@ -318,6 +322,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                 <span>Ingelogd als: <strong><?php echo htmlspecialchars($_SESSION['gebruiker']); ?></strong></span>
             </div>
             <div>
+                <span id="taal-plek" style="margin-right: 5px;"></span>
                 <button id="geluid-knop" class="btn-actie btn-geluid uit" onclick="wisselGeluid()">🔕 Geluid uit</button>
                 <?php if (isset($_SESSION['rol']) &&$_SESSION['rol'] === 'baas'): ?>
                     <a href="chef.php" class="btn-actie btn-switch">🍳 Naar Keuken Scherm</a>
@@ -361,6 +366,9 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                 </button>
                 <button class="tab-btn" onclick="zetTab('betalingen', this)" style="position: relative;">
                     Betaalverzoeken 💳 <span id="betaal-badge" class="badge-melding" style="display:none;">0</span>
+                </button>
+                <button class="tab-btn" onclick="zetTab('oproepen', this)" style="position: relative;">
+                    Oproepen 🙋 <span id="oproep-badge" class="badge-melding" style="display:none;">0</span>
                 </button>
                 <button class="tab-btn" onclick="zetTab('tafels', this)" style="position: relative;">
                     Tafels 🪑 <span id="tafels-badge" class="badge-melding" style="display:none;">0</span>
@@ -456,6 +464,10 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                     statusTekst = 'TIJD IS OM';
                     emoji = '⏰';
                 }
+                if (tafelInfo && tafelInfo.oproep_status === 'open') {
+                    statusTekst = 'ROEPT OM HULP';
+                    emoji = '🙋';
+                }
                 html1 += `<option value="${i}">${emoji} Tafel ${i}: ${statusTekst}</option>`;
             }
             select1.innerHTML = html1;
@@ -476,6 +488,10 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                 } else if (tafelInfo && tafelInfo.status === 'bezet' && tafelInfo.seconden_over !== null && tafelInfo.seconden_over <= 0) {
                     statusTekst = 'TIJD IS OM';
                     emoji = '⏰';
+                }
+                if (tafelInfo && tafelInfo.oproep_status === 'open') {
+                    statusTekst = 'ROEPT OM HULP';
+                    emoji = '🙋';
                 }
                 html2 += `<option value="${i}">${emoji} Tafel ${i}: ${statusTekst}</option>`;
             }
@@ -553,6 +569,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
             alleBestellingenCache.forEach(o => { if (o.status === 'klaar') huidige.push('klaar-' + o.id); });
             for (let t in tafelsStatusCache) {
                 if (tafelsStatusCache[t].status === 'betalen') huidige.push('betalen-' + t);
+                if (tafelsStatusCache[t].oproep_status === 'open') huidige.push('oproep-' + t + '-' + tafelsStatusCache[t].oproep_tijd);
             }
             if (bekendeMeldingen !== null && huidige.some(m => !bekendeMeldingen.has(m))) {
                 speelPling();
@@ -569,6 +586,11 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                 if (info.status === 'bezet' && info.seconden_over !== null && info.seconden_over <= 0) tijdOm++;
             }
             zetBadge('tafels-badge', tijdOm);
+            let openOproepen = 0;
+            for (let t in tafelsStatusCache) {
+                if (tafelsStatusCache[t].oproep_status === 'open') openOproepen++;
+            }
+            zetBadge('oproep-badge', openOproepen);
             let klaarCount = alleBestellingenCache.filter(o => o.status === 'klaar').length;
             let onderwegCount = alleBestellingenCache.filter(o => o.status === 'onderweg').length;
 
@@ -622,6 +644,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                             </div>
                         </div>
                         <div class="order-footer">
+                            <button class="btn btn-bon" onclick="printBon(${Number(info.tafel)})">🖨️ Bon printen</button>
                             <button class="btn btn-bezorgd" onclick="zetTafelVrij(${Number(info.tafel)}, 'contant', 'betaald')">💶 Betaald & vrijmaken</button>
                             <button class="btn btn-verlaten" onclick="zetTafelVrij(${Number(info.tafel)}, '', 'verlaten')">🚪 Vertrokken zonder betalen</button>
                         </div>
@@ -629,8 +652,82 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
             }).join('');
         }
 
+        const REDEN_TEKST = {
+            vraag: '❓ Heeft een vraag',
+            probleem: '⚠️ Probleem met bestelling',
+            allergie: '🥜 Allergie of dieet',
+            anders: '💬 Iets anders'
+        };
+
+        function tekenOproepen(raster) {
+            const oproepen = Object.values(tafelsStatusCache)
+                .filter(t => t.oproep_status)
+                .sort((a, b) => String(a.oproep_tijd).localeCompare(String(b.oproep_tijd)));   // oudste eerst
+            if (oproepen.length === 0) {
+                raster.innerHTML = '<div class="geen-orders">Geen gasten die om hulp vragen op dit moment.</div>';
+                return;
+            }
+            raster.innerHTML = oproepen.map(info => {
+                const geaccepteerd = info.oproep_status === 'geaccepteerd';
+                const minuten = info.oproep_minuten || 0;
+                const wachttijd = minuten === 0 ? 'zojuist' : `${minuten} min geleden`;
+                return `
+                    <div class="order-kaart betalen ${geaccepteerd ? 'geaccepteerd' : ''}">
+                        <div>
+                            <div class="order-header">
+                                <h3>Mesa ${esc(info.tafel)} (Tafel)</h3>
+                                <span class="badge ${geaccepteerd ? 'geaccepteerd' : 'betalen'}">${geaccepteerd ? 'Onderweg' : 'Roept om hulp'}</span>
+                            </div>
+                            <div class="order-body">
+                                <p class="betaalmethode contant" style="background: #fff8e1; color: #7d5a00;">${esc(REDEN_TEKST[info.oproep_reden] || 'Vraagt om een serveerster')}</p>
+                                ${info.oproep_tekst ? `<div class="opmerking-tag">💬 ${esc(info.oproep_tekst)}</div>` : ''}
+                                <p><strong>Gast naam:</strong> ${esc(info.gast_naam || 'Onbekend')}</p>
+                                <p><small style="color: var(--grijs);">🕒 Geroepen om ${esc(info.oproep_tijd_kort || '--:--')} (${wachttijd})</small></p>
+                                ${geaccepteerd ? `<p class="medewerker-tag">🙋‍♀️ Geaccepteerd door: <strong>${esc(info.oproep_door || 'Onbekend')}</strong></p>` : ''}
+                            </div>
+                        </div>
+                        <div class="order-footer">
+                            ${!geaccepteerd
+                                ? `<button class="btn btn-danger" onclick="accepteerOproep(${Number(info.tafel)})">✅ Accepteren (ik kom eraan)</button>`
+                                : `<button class="btn btn-bezorgd" onclick="oproepAfgehandeld(${Number(info.tafel)})">✔️ Afgehandeld</button>`}
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        function accepteerOproep(tafel) {
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actie: 'roep_accepteer', tafel: tafel })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.succes) alert(data.melding || 'Accepteren is niet gelukt.');
+                laadData();
+            });
+        }
+
+        function oproepAfgehandeld(tafel) {
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actie: 'roep_afgehandeld', tafel: tafel })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.succes) alert(data.melding || 'Afhandelen is niet gelukt.');
+                laadData();
+            });
+        }
+
         function filterBestellingen() {
             const raster = document.getElementById('orders-raster');
+
+            if (huidigeTab === 'oproepen') {
+                tekenOproepen(raster);
+                return;
+            }
 
             if (huidigeTab === 'tafels') {
                 tekenTafelsOverzicht(raster);
@@ -668,10 +765,12 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                                         <p><strong>Gast naam:</strong> ${esc(info.gast_naam || 'Onbekend')}</p>
                                         <p><strong>Gezelschap:</strong> ${esc(info.gezelschap || '-')}</p>
                                         ${rekeningHtml}
+                                        ${bonRegel(info)}
                                         ${geaccepteerd ? `<p class="medewerker-tag">🙋‍♀️ Geaccepteerd door: <strong>${esc(info.geaccepteerd_door || 'Onbekend')}</strong></p>` : ''}
                                     </div>
                                 </div>
                                 <div class="order-footer">
+                                    <button class="btn btn-bon" onclick="printBon(${t})">🖨️ Bon printen</button>
                                     ${!geaccepteerd ? `
                                         <button class="btn btn-danger" onclick="accepteerBetaling(${t})">✅ Accepteren (${online ? 'ik ga controleren' : 'ik kom naar de tafel'})</button>
                                     ` : `
@@ -719,6 +818,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                             <div class="pakket-tag">📦 ${esc(order.pakket || 'Onbekend arrangement')}</div>
                             <div class="order-body">
                                 <p><strong>Tapa / Gerecht:</strong> ${esc(order.gerecht)}</p>
+                                ${Number(order.aangepast) ? '<p style="background: #f4ecf7; color: #6c3483; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; display: inline-block;">✏️ Aangepast door de keuken</p>' : ''}
                                 <p><small style="color: var(--grijs);">🕒 Besteld om: ${esc(order.tijd || '--:--')}</small></p>
                                 ${order.opmerking ? `<div class="opmerking-tag">📝 ${esc(order.opmerking)}</div>` : ''}
                                 ${order.chef_naam ? `<p class="medewerker-tag">👨‍🍳 Bereid door: <strong>${esc(order.chef_naam)}</strong></p>` : ''}
@@ -733,7 +833,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
                                 <button class="btn btn-bezorgd" onclick="updateStatus(${order.id}, 'bezorgd')">✅ Bezorgd / Uitgeserveerd</button>
                             ` : ''}
                             ${order.status === 'bezorgd' ? `
-                                <p style="margin: 0; font-size: 0.85rem; color: #27ae60;"><strong>Uitgeserveerd!</strong> (Wordt 10 min na bezorging automatisch verwijderd)</p>
+                                <p style="margin: 0; font-size: 0.85rem; color: #27ae60;"><strong>Uitgeserveerd!</strong> (Verdwijnt 10 min na bezorging uit dit overzicht)</p>
                             ` : ''}
                         </div>
                     </div>
@@ -765,6 +865,17 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
             });
         }
 
+        // Welke bon wil de gast?
+        function bonRegel(info) {
+            if (info.bon_keuze === 'email') return `<p class="bon-tag">📧 Bon per e-mail naar <strong>${esc(info.bon_email)}</strong> (gaat automatisch bij vrijmaken)</p>`;
+            if (info.bon_keuze === 'papier') return `<p class="bon-tag papier">🧾 Wil een papieren bon: print hem en neem hem mee</p>`;
+            return '';
+        }
+
+        function printBon(tafel) {
+            window.open('bon.php?tafel=' + encodeURIComponent(tafel), '_blank');
+        }
+
         // Tafel afsluiten. reden: 'betaald' (normaal) of 'verlaten' (gasten zonder betalen vertrokken)
         function zetTafelVrij(tafelNummer, methode, reden = 'betaald') {
             const info = tafelsStatusCache[tafelNummer];
@@ -787,6 +898,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'serveerster' &&$_SESSION[
             .then(res => res.json())
             .then(response => {
                 if (!response.succes) alert(response.melding || 'Fout bij vrijmaken tafel.');
+                else if (response.bon && response.bon.melding) alert(response.bon.melding);
                 laadData();
             });
         }

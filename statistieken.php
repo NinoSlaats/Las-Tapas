@@ -63,6 +63,19 @@ $topDrank = alleRijen(q("SELECT naam, SUM(aantal) AS aantal FROM verkocht
 $perUur = alleRijen(q("SELECT HOUR(datum) AS uur, SUM(aantal) AS aantal FROM verkocht
                        WHERE $wVerkocht GROUP BY HOUR(datum) ORDER BY uur"));
 
+// ---- Beoordelingen ----
+$reviews = q("SELECT COUNT(beoordeling) AS n, AVG(beoordeling) AS gem FROM archief
+              WHERE beoordeling IS NOT NULL AND $wArchief")->fetch_assoc();
+$sterVerdeling = alleRijen(q("SELECT beoordeling, COUNT(*) AS aantal FROM archief
+                              WHERE beoordeling IS NOT NULL AND $wArchief
+                              GROUP BY beoordeling ORDER BY beoordeling DESC"));
+$laatsteReviews = alleRijen(q("SELECT tafel, gast_naam, beoordeling, review_tekst, review_op FROM archief
+                               WHERE beoordeling IS NOT NULL AND $wArchief ORDER BY review_op DESC LIMIT 10"));
+function sterren($n) {
+    $n = max(0, min(5, intval($n)));
+    return str_repeat('★', $n) . str_repeat('☆', 5 - $n);
+}
+
 // ---- Laatst afgesloten tafels ----
 $recent = alleRijen(q("SELECT * FROM archief WHERE $wArchief ORDER BY afgerond_op DESC LIMIT 15"));
 
@@ -119,6 +132,10 @@ $extraStijl = '
     .balk-spoor { background: #f0eae1; border-radius: 4px; height: 14px; }
     .balk { display: block; height: 100%; background: var(--rood); border-radius: 4px; }
     .balk-waarde { font-weight: bold; min-width: 60px; text-align: right; }
+    .review { background: var(--vlak); border: 1px solid var(--lijn); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+    .review-kop { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .review-sterren { color: #e9a23b; font-size: 1.1rem; letter-spacing: 2px; }
+    .review p { margin: 6px 0 0 0; font-size: 0.9rem; }
     .status-verlaten { color: #c0392b; font-weight: bold; }
     @media (max-width: 700px) {
         .twee-kolom { grid-template-columns: 1fr; }
@@ -146,6 +163,10 @@ include __DIR__ . '/beheer_kop.php';
         <div class="kpi <?php echo intval($verlaten['n']) > 0 ? 'waarschuwing' : ''; ?>">
             <div class="waarde"><?php echo intval($verlaten['n']); ?></div>
             <div class="label">Vertrokken zonder betalen (<?php echo euroTekst($verlaten['bedrag']); ?>)</div>
+        </div>
+        <div class="kpi">
+            <div class="waarde"><?php echo intval($reviews['n']) ? number_format((float)$reviews['gem'], 1, ',', '') . ' ★' : '-'; ?></div>
+            <div class="label">Gemiddelde beoordeling (<?php echo intval($reviews['n']); ?>)</div>
         </div>
     </div>
 
@@ -176,6 +197,34 @@ include __DIR__ . '/beheer_kop.php';
             <?php echo balken($uurLabels, 'label', 'aantal'); ?>
         </div>
     </div>
+
+    <h2>Beoordelingen van gasten</h2>
+    <?php if (!intval($reviews['n'])): ?>
+        <p class="uitleg">Nog geen beoordelingen in deze periode. Gasten kunnen een beoordeling geven nadat ze hebben betaald.</p>
+    <?php else: ?>
+        <div class="twee-kolom">
+            <div>
+                <?php
+                    $verdeling = array_map(function ($r) {
+                        $r['label'] = sterren($r['beoordeling']);
+                        return $r;
+                    }, $sterVerdeling);
+                    echo balken($verdeling, 'label', 'aantal');
+                ?>
+            </div>
+            <div>
+                <?php foreach ($laatsteReviews as $r): ?>
+                    <div class="review">
+                        <div class="review-kop">
+                            <span class="review-sterren"><?php echo sterren($r['beoordeling']); ?></span>
+                            <small><?php echo esc($r['gast_naam']); ?> · tafel <?php echo intval($r['tafel']); ?> · <?php echo esc(date('d-m H:i', strtotime($r['review_op']))); ?></small>
+                        </div>
+                        <?php if ($r['review_tekst'] !== ''): ?><p><?php echo esc($r['review_tekst']); ?></p><?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <h2>Laatst afgesloten tafels</h2>
     <?php if (!$recent): ?>

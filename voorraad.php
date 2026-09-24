@@ -178,6 +178,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
             th, td { padding: 8px 10px; font-size: 0.85rem; }
         }
     </style>
+    <script src="taal.js" defer></script>
 </head>
 <body>
 
@@ -191,6 +192,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
                 <span>Ingelogd als: <strong><?php echo htmlspecialchars($_SESSION['gebruiker']); ?></strong></span>
             </div>
             <div>
+                <span id="taal-plek" style="margin-right: 5px;"></span>
                 <?php if ($_SESSION['rol'] === 'chef'): ?>
                     <a href="chef.php" class="btn-actie btn-terug">🍳 Naar Keuken</a>
                 <?php elseif ($_SESSION['rol'] === 'baas'): ?>

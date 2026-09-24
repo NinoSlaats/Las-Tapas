@@ -1,69 +1,54 @@
 <?php
-header('Content-Type: application/json');
-ini_set('display_errors', '0');
+/*
+ * Las Tapas - voorraad_api.php
+ * Voorraad opvragen (iedereen) en aanpassen (alleen chef of baas).
+ * Gebruikt de gedeelde databaseverbinding uit gedeeld.php.
+ */
+require __DIR__ . '/gedeeld.php';
+header('Content-Type: application/json; charset=UTF-8');
+header('Cache-Control: no-store');
 
-// Wie is er ingelogd? Voorraad bekijken mag iedereen, aanpassen alleen chef of baas.
 session_start();
 $rol = $_SESSION['rol'] ?? '';
 session_write_close();
 
-// Databaseverbinding voor Las Tapas
-$host = 'localhost';
-$db   = 'las_tapas_db';
-$user = 'root';
-$pass = '';
-
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    echo json_encode(['succes' => false, 'fout' => 'Databaseverbinding mislukt']);
+function antwoord($data, $code = 200) {
+    http_response_code($code);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit();
 }
 
-$method = $_SERVER['REQUEST_METHOD'];
+try {
+    db();
+} catch (Throwable $e) {
+    antwoord(['succes' => false, 'fout' => 'Databaseverbinding mislukt']);
+}
 
-if ($method === 'GET') {
-    // Haal alle voorraaditems op uit de database
-    $result = $conn->query("SELECT id, naam, aantal FROM voorraad");
+$methode = $_SERVER['REQUEST_METHOD'];
+
+// Alle voorraad opvragen
+if ($methode === 'GET') {
     $voorraad = [];
-    
-    while ($row = $result->fetch_assoc()) {
-        $voorraad[] = [
-            'id' => (int)$row['id'],
-            'naam' => $row['naam'],
-            'aantal' => (int)$row['aantal']
-        ];
+    foreach (alleRijen(q("SELECT id, naam, aantal FROM voorraad")) as $rij) {
+        $voorraad[] = ['id' => (int)$rij['id'], 'naam' => $rij['naam'], 'aantal' => (int)$rij['aantal']];
     }
-    
-    echo json_encode($voorraad);
-    exit();
+    antwoord($voorraad);
 }
 
-if ($method === 'POST') {
+// Aantal van één product aanpassen
+if ($methode === 'POST') {
     if ($rol !== 'chef' && $rol !== 'baas') {
-        http_response_code(403);
-        echo json_encode(['succes' => false, 'fout' => 'Geen toegang: log in als chef of baas.']);
-        exit();
+        antwoord(['succes' => false, 'fout' => 'Geen toegang: log in als chef of baas.'], 403);
     }
-
-    // Ontvang de JSON data van de frontend
     $data = json_decode(file_get_contents('php://input'), true);
-
-    if (isset($data['actie']) && $data['actie'] === 'update') {
-        $id = intval($data['id']);
-        $aantal = max(0, intval($data['aantal']));
-
-        $stmt = $conn->prepare("UPDATE voorraad SET aantal = ? WHERE id = ?");
-        $stmt->bind_param("ii", $aantal, $id);
-        
-        if ($stmt->execute()) {
-            echo json_encode(['succes' => true]);
-        } else {
-            echo json_encode(['succes' => false, 'fout' => 'Kon database niet updaten']);
+    if (($data['actie'] ?? '') === 'update') {
+        try {
+            q("UPDATE voorraad SET aantal = ? WHERE id = ?", "ii", [max(0, intval($data['aantal'] ?? 0)), intval($data['id'] ?? 0)]);
+            antwoord(['succes' => true]);
+        } catch (Throwable $e) {
+            antwoord(['succes' => false, 'fout' => 'Kon database niet updaten']);
         }
-        exit();
     }
 }
 
-echo json_encode(['succes' => false, 'fout' => 'Ongeldige aanvraag']);
-?>
+antwoord(['succes' => false, 'fout' => 'Ongeldige aanvraag']);

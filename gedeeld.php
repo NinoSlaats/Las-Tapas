@@ -13,7 +13,7 @@ date_default_timezone_set('Europe/Amsterdam');
 mysqli_report(MYSQLI_REPORT_OFF);
 
 // Verhoog dit getal als er tabellen/kolommen bijkomen; dan wordt de database bijgewerkt.
-const SCHEMA_VERSIE = '4';
+const SCHEMA_VERSIE = '9';
 
 // De 14 allergenen die een restaurant in de EU moet kunnen benoemen
 const ALLERGENEN = [
@@ -118,6 +118,7 @@ function setupDatabase($conn) {
     kolomToevoegen($conn, 'bestellingen', 'bedrag', "DECIMAL(8,2) NOT NULL DEFAULT 0");
     kolomToevoegen($conn, 'bestellingen', 'opmerking', "VARCHAR(255) NOT NULL DEFAULT ''");
     kolomToevoegen($conn, 'bestellingen', 'besteld_op', "DATETIME NULL DEFAULT NULL");
+    kolomToevoegen($conn, 'bestellingen', 'aangepast', "TINYINT NOT NULL DEFAULT 0");   // door de keuken gewijzigd
 
     $conn->query("CREATE TABLE IF NOT EXISTS voorraad (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -145,6 +146,21 @@ function setupDatabase($conn) {
     kolomToevoegen($conn, 'tafels', 'drank_kosten', "DECIMAL(8,2) NOT NULL DEFAULT 0");
     kolomToevoegen($conn, 'tafels', 'betaalmethode', "VARCHAR(20) NOT NULL DEFAULT ''");
     kolomToevoegen($conn, 'tafels', 'laatste_activiteit', "DATETIME NULL DEFAULT NULL");
+    // Bon: 'geen', 'email' of 'papier' (gekozen door de gast bij het afrekenen)
+    kolomToevoegen($conn, 'tafels', 'bon_keuze', "VARCHAR(10) NOT NULL DEFAULT ''");
+    kolomToevoegen($conn, 'tafels', 'bon_email', "VARCHAR(190) NOT NULL DEFAULT ''");
+    kolomToevoegen($conn, 'tafels', 'bon_taal', "VARCHAR(2) NOT NULL DEFAULT 'nl'");
+    kolomToevoegen($conn, 'archief', 'bon_keuze', "VARCHAR(10) NOT NULL DEFAULT ''");
+    kolomToevoegen($conn, 'archief', 'bon_status', "VARCHAR(20) NOT NULL DEFAULT ''");
+
+    // Unieke code per bezoek: telefoons van een afgesloten bezoek kunnen de tafel niet opnieuw openen
+    kolomToevoegen($conn, 'tafels', 'sessie', "VARCHAR(32) NOT NULL DEFAULT ''");
+    // Serveerster roepen: '' (geen), 'open' (wacht op serveerster) of 'geaccepteerd'
+    kolomToevoegen($conn, 'tafels', 'oproep_status', "VARCHAR(20) NOT NULL DEFAULT ''");
+    kolomToevoegen($conn, 'tafels', 'oproep_reden', "VARCHAR(30) NOT NULL DEFAULT ''");
+    kolomToevoegen($conn, 'tafels', 'oproep_tekst', "VARCHAR(200) NOT NULL DEFAULT ''");
+    kolomToevoegen($conn, 'tafels', 'oproep_tijd', "DATETIME NULL DEFAULT NULL");
+    kolomToevoegen($conn, 'tafels', 'oproep_door', "VARCHAR(100) NOT NULL DEFAULT ''");
 
     // --- Nieuwe tabellen ---
     $conn->query("CREATE TABLE IF NOT EXISTS menu (
@@ -187,6 +203,11 @@ function setupDatabase($conn) {
         start_tijd DATETIME NULL DEFAULT NULL,
         afgerond_op DATETIME NOT NULL
     )");
+
+    // Beoordeling van de gast na het betalen (1 t/m 5 sterren)
+    kolomToevoegen($conn, 'archief', 'beoordeling', "TINYINT NULL DEFAULT NULL");
+    kolomToevoegen($conn, 'archief', 'review_tekst', "VARCHAR(300) NOT NULL DEFAULT ''");
+    kolomToevoegen($conn, 'archief', 'review_op', "DATETIME NULL DEFAULT NULL");
 
     // Elk besteld gerecht (voor 'populairste gerechten' en de ronde-limiet)
     $conn->query("CREATE TABLE IF NOT EXISTS verkocht (
@@ -256,7 +277,14 @@ function setupDatabase($conn) {
         ('ronde_max_pp', '3'),
         ('ronde_minuten', '10'),
         ('opruimen_na_uren', '4'),
-        ('tafel_geheim', '$geheim')");
+        ('tafel_geheim', '$geheim'),
+        ('smtp_host', 'smtp.gmail.com'),
+        ('smtp_poort', '587'),
+        ('smtp_beveiliging', 'tls'),
+        ('smtp_gebruiker', ''),
+        ('smtp_wachtwoord', ''),
+        ('smtp_controle_uit', '0'),
+        ('mail_afzender_naam', 'Las Tapas')");
 
     // Elk menu-item krijgt een voorraadregel (koppeling op naam)
     $conn->query("INSERT INTO voorraad (naam, categorie, aantal)
@@ -347,6 +375,48 @@ function drankprijzen() {
         if ($m['categorie'] === 'drankje' && $m['prijs'] > 0) $prijzen[$naam] = $m['prijs'];
     }
     return $prijzen;
+}
+
+// ===================== REKENING =====================
+
+function personenVan($t) {
+    return intval($t['volw'] ?? 0) + intval($t['sen'] ?? 0) + intval($t['kind'] ?? 0);
+}
+
+// Teksten op de rekening in drie talen (Nederlands is de standaard op het scherm)
+const REKENING_TEKSTEN = [
+    'nl' => ['volw' => 'Volwassene', 'sen' => 'Senior (65+)', 'kind' => 'Kind', 'drank' => 'Drankjes (niet inbegrepen)', 'verlenging' => 'Verlenging %d min (%d pers.)'],
+    'en' => ['volw' => 'Adult', 'sen' => 'Senior (65+)', 'kind' => 'Child', 'drank' => 'Drinks (not included)', 'verlenging' => 'Extension %d min (%d pers.)'],
+    'es' => ['volw' => 'Adulto', 'sen' => 'Mayor (65+)', 'kind' => 'Niño', 'drank' => 'Bebidas (no incluidas)', 'verlenging' => 'Ampliación %d min (%d pers.)'],
+];
+
+// Rekening van een tafel: arrangement per persoon + losse drankjes + verlengingen
+function berekenRekening($t, $taal = 'nl') {
+    $tk = REKENING_TEKSTEN[$taal] ?? REKENING_TEKSTEN['nl'];
+    $info = pakketInfo($t['pakket']);
+    $regels = [];
+    foreach (['volw', 'sen', 'kind'] as $sleutel) {
+        $n = intval($t[$sleutel] ?? 0);
+        if ($n > 0) {
+            $regels[] = ['omschrijving' => "{$n}× {$tk[$sleutel]}", 'bedrag' => round($n * $info['prijs'][$sleutel], 2)];
+        }
+    }
+    $drank = floatval($t['drank_kosten'] ?? 0);
+    if ($drank > 0) {
+        $regels[] = ['omschrijving' => $tk['drank'], 'bedrag' => round($drank, 2)];
+    }
+    $verl = intval($t['verlengingen'] ?? 0);
+    $personen = personenVan($t);
+    if ($verl > 0 && $personen > 0) {
+        $minuten = $verl * intval(instelling('verleng_minuten', 30));
+        $regels[] = [
+            'omschrijving' => sprintf($tk['verlenging'], $minuten, $personen),
+            'bedrag' => round($verl * $personen * floatval(instelling('verleng_prijs_pp', 6)), 2),
+        ];
+    }
+    $totaal = 0.0;
+    foreach ($regels as $r) $totaal += $r['bedrag'];
+    return ['regels' => $regels, 'totaal' => round($totaal, 2)];
 }
 
 // ===================== TAFELCODES =====================

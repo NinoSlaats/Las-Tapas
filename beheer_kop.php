@@ -79,6 +79,7 @@ $beheerPaginas = [
         }
         <?php echo $extraStijl ?? ''; ?>
     </style>
+    <script src="taal.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -88,6 +89,7 @@ $beheerPaginas = [
             <p>Welkom, <strong><?php echo esc($_SESSION['gebruiker'] ?? ''); ?></strong> (Eigenaar)</p>
         </div>
         <div class="header-knoppen">
+            <span id="taal-plek"></span>
             <a href="chef.php" class="btn-uitlog" style="background: #27ae60;">🍳 Keuken</a>
             <a href="serveerster.php" class="btn-uitlog" style="background: #2980b9;">🏃 Bediening</a>
             <a href="logout.php" class="btn-uitlog">Uitloggen</a>

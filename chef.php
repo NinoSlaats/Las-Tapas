@@ -245,17 +245,24 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
         .btn-klaar { background: #27ae60; color: white; }
         .btn-verwijder { background: #c0392b; color: white; }
         
-        .select-aanpas {
-            background-color: #8e44ad;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            cursor: pointer;
-            outline: none;
-        }
+        .btn-aanpas { background-color: #8e44ad; color: white; }
+        .aangepast-tag { background: #f4ecf7; color: #6c3483; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem !important; font-weight: bold; display: inline-block; }
+        .aanpas-overlay { position: fixed; inset: 0; background: rgba(45, 33, 29, 0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 15px; }
+        .aanpas-venster { background: white; border-radius: 12px; padding: 22px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+        .aanpas-venster h2 { margin: 0; color: var(--rood); font-family: Georgia, serif; font-size: 1.4rem; }
+        .aanpas-sub { margin: 4px 0 15px 0; color: var(--grijs); font-weight: bold; }
+        .aanpas-regel { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0eae1; }
+        .aanpas-naam { font-weight: bold; }
+        .aanpas-knoppen { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .aanpas-knoppen button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid #e0d5cb; background: #fcf8f2; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .aanpas-knoppen .aanpas-weg { background: white; border-color: #f5c6c0; }
+        .aanpas-aantal { min-width: 22px; text-align: center; font-weight: bold; }
+        .aanpas-leeg { color: #c0392b; font-weight: bold; font-size: 0.9rem; }
+        .aanpas-select { width: 100%; margin-top: 14px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+        .aanpas-fout { color: #c0392b; font-weight: bold; font-size: 0.85rem; min-height: 1em; }
+        .aanpas-acties { display: flex; gap: 10px; }
+        .aanpas-acties .btn { flex: 1; padding: 12px; font-size: 1rem; }
+        .aanpas-annuleer { background: #e0d5cb; color: var(--inkt); }
 
         .geen-orders {
             grid-column: 1 / -1;
@@ -309,6 +316,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
             .orders-raster { grid-template-columns: 1fr; }
         }
     </style>
+    <script src="taal.js" defer></script>
 </head>
 <body>
 
@@ -322,6 +330,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
                 <span>Ingelogd als: <strong><?php echo htmlspecialchars($_SESSION['gebruiker']); ?></strong></span>
             </div>
             <div>
+                <span id="taal-plek" style="margin-right: 5px;"></span>
                 <button id="geluid-knop" class="btn-actie btn-geluid uit" onclick="wisselGeluid()">🔕 Geluid uit</button>
                 <a href="voorraad.php" class="btn-actie btn-voorraad">📦 Voorraad</a>
                 
@@ -372,6 +381,21 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
         </div>
     </div>
 
+    <!-- Venster: bestelling aanpassen -->
+    <div id="aanpas-modal" class="aanpas-overlay" style="display: none;" onclick="if (event.target === this) sluitAanpassen()">
+        <div class="aanpas-venster">
+            <h2>✏️ Bestelling aanpassen</h2>
+            <p class="aanpas-sub" id="aanpas-titel"></p>
+            <div id="aanpas-regels"></div>
+            <select id="aanpas-nieuw" class="aanpas-select" onchange="voegRegelToe(this.value)"></select>
+            <p id="aanpas-melding" class="aanpas-fout"></p>
+            <div class="aanpas-acties">
+                <button type="button" class="btn aanpas-annuleer" onclick="sluitAanpassen()">Annuleren</button>
+                <button type="button" class="btn btn-klaar" id="aanpas-opslaan" onclick="slaAanpassingOp()">Opslaan</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Voor ngrok (gratis versie): sla de ngrok-waarschuwingspagina over bij
         // alle data-aanvragen, anders krijgt de pagina HTML terug in plaats van data.
@@ -384,16 +408,13 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
         })();
 
         // Keuzelijst "gerecht aanpassen": wordt gevuld vanuit het menu in de database
-        let menuOpties = [];
+        let menuLijst = [];   // alle gerechten van het menu (voor het aanpasvenster)
 
         function laadMenuOpties() {
             fetch('bestelling.php?view=config&_=' + Date.now(), { cache: 'no-store' })
                 .then(res => res.json())
                 .then(cfg => {
-                    menuOpties = [];
-                    (cfg.menu || []).forEach(m => {
-                        menuOpties.push(`1x ${m.naam}`, `2x ${m.naam}`);
-                    });
+                    menuLijst = (cfg.menu || []).map(m => ({ naam: m.naam, categorie: m.categorie }));
                 })
                 .catch(err => console.error('Fout bij laden menu:', err));
         }
@@ -580,11 +601,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
             raster.innerHTML = data.map(order => {
                 let statusKlasse = order.status || 'nieuw';
 
-                let optionsHtml = `<option value="" disabled>✏️ Aanpassen...</option>`;
-                menuOpties.forEach(optie => {
-                    let geselecteerd = (optie === order.gerecht) ? 'selected' : '';
-                    optionsHtml += `<option value="${esc(optie)}" ${geselecteerd}>${esc(optie)}</option>`;
-                });
+
 
                 let isBezorgTab = (huidigeTab === 'bezorging');
 
@@ -603,6 +620,7 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
                             <div class="pakket-tag">📦 ${esc(order.pakket || 'Onbekend arrangement')}</div>
                             <div class="order-body">
                                 <p><strong>Tapa / Gerecht:</strong> ${esc(order.gerecht)}</p>
+                                ${Number(order.aangepast) ? '<p class="aangepast-tag">✏️ Aangepast door de keuken</p>' : ''}
                                 <p><small style="color: var(--grijs);">🕒 Besteld om: ${esc(order.tijd || '--:--')}</small></p>
                                 ${order.chef_naam ? `<p class="medewerker-tag">👨‍🍳 Geaccepteerd door: <strong>${esc(order.chef_naam)}</strong></p>` : ''}
                                 ${order.serveerster_naam ? `<p class="medewerker-tag">🏃‍♀️ ${order.status === 'bezorgd' ? 'Bezorgd door' : 'Onderweg met'}: <strong>${esc(order.serveerster_naam)}</strong></p>` : ''}
@@ -615,13 +633,12 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
                                 ${order.status === 'nieuw' ? `<button class="btn btn-start" onclick="updateStatus(${order.id}, 'bezig')">Start Bereiding</button>` : ''}
                                 ${order.status !== 'klaar' ? `<button class="btn btn-klaar" onclick="updateStatus(${order.id}, 'klaar')">Klaar</button>` : ''}
                                 
-                                <select class="select-aanpas" onchange="bewerkGerecht(${order.id}, this.value)">
-                                    ${optionsHtml}
-                                </select>
+                                ${(order.status === 'nieuw' || order.status === 'bezig')
+                                    ? `<button class="btn btn-aanpas" onclick="openAanpassen(${Number(order.id)})">✏️ Aanpassen</button>` : ''}
 
                                 <button class="btn btn-verwijder" onclick="verwijderOrder(${order.id})">Verwijderen</button>
                             ` : `
-                                <p style="margin: 0; font-size: 0.85rem; color: var(--grijs);"><em>Status wordt beheerd door bediening (Verdwijnt 10 min na bezorging)</em></p>
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--grijs);"><em>Status wordt beheerd door bediening (Verdwijnt 10 min na bezorging uit dit overzicht)</em></p>
                             `}
                         </div>
                     </div>
@@ -639,26 +656,107 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'chef' &&$_SESSION['rol'] 
             .then(data => { if (!data.succes && data.melding) alert(data.melding); laadData(); });
         }
 
-        function bewerkGerecht(id, nieuwGerecht) {
-            if (!nieuwGerecht) return;
+        // ===== Bestelling aanpassen (bijv. als een gerecht op is) =====
+        let aanpasId = null;
+        let aanpasRegels = [];   // [{ naam, aantal }]
 
+        function openAanpassen(id) {
+            const order = alleBestellingenCache.find(o => Number(o.id) === Number(id));
+            if (!order) return;
+            aanpasId = order.id;
+            aanpasRegels = String(order.gerecht).split(',').map(deel => {
+                const m = deel.trim().match(/^(\d+)\s*x\s+(.+)$/i);
+                return m ? { naam: m[2].trim(), aantal: parseInt(m[1]) } : null;
+            }).filter(Boolean);
+
+            document.getElementById('aanpas-titel').innerText = `Mesa ${order.tafel} (Tafel)`;
+            document.getElementById('aanpas-melding').innerText = '';
+            const kies = document.getElementById('aanpas-nieuw');
+            const groepen = { voorgerecht: 'Voorgerechten', hoofdgerecht: 'Warme tapas', drankje: 'Drankjes', toetje: 'Toetjes' };
+            kies.innerHTML = '<option value="">➕ Gerecht toevoegen...</option>' + Object.entries(groepen).map(([cat, label]) =>
+                `<optgroup label="${esc(label)}">` + menuLijst.filter(m => m.categorie === cat)
+                    .map(m => `<option value="${esc(m.naam)}">${esc(m.naam)}</option>`).join('') + '</optgroup>'
+            ).join('');
+            tekenAanpasRegels();
+            document.getElementById('aanpas-modal').style.display = 'flex';
+        }
+
+        function tekenAanpasRegels() {
+            const lijst = document.getElementById('aanpas-regels');
+            if (aanpasRegels.length === 0) {
+                lijst.innerHTML = '<p class="aanpas-leeg">Alle gerechten zijn weggehaald. Bij opslaan wordt de hele bestelling verwijderd.</p>';
+                return;
+            }
+            lijst.innerHTML = aanpasRegels.map((r, i) => `
+                <div class="aanpas-regel">
+                    <span class="aanpas-naam">${esc(r.naam)}</span>
+                    <div class="aanpas-knoppen">
+                        <button type="button" onclick="wijzigAantal(${i}, -1)" aria-label="Minder">−</button>
+                        <span class="aanpas-aantal">${r.aantal}</span>
+                        <button type="button" onclick="wijzigAantal(${i}, 1)" aria-label="Meer">+</button>
+                        <button type="button" class="aanpas-weg" onclick="verwijderRegel(${i})" aria-label="Weghalen">🗑️</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function wijzigAantal(i, stap) {
+            aanpasRegels[i].aantal = Math.max(0, Math.min(20, aanpasRegels[i].aantal + stap));
+            if (aanpasRegels[i].aantal === 0) aanpasRegels.splice(i, 1);
+            tekenAanpasRegels();
+        }
+
+        function verwijderRegel(i) {
+            aanpasRegels.splice(i, 1);
+            tekenAanpasRegels();
+        }
+
+        function voegRegelToe(naam) {
+            if (!naam) return;
+            const bestaand = aanpasRegels.find(r => r.naam === naam);
+            if (bestaand) bestaand.aantal = Math.min(20, bestaand.aantal + 1);
+            else aanpasRegels.push({ naam: naam, aantal: 1 });
+            document.getElementById('aanpas-nieuw').value = '';
+            tekenAanpasRegels();
+        }
+
+        function sluitAanpassen() {
+            document.getElementById('aanpas-modal').style.display = 'none';
+            aanpasId = null;
+        }
+
+        function slaAanpassingOp() {
+            if (aanpasId === null) return;
+            // Alles weggehaald? Dan de hele bestelling verwijderen (met bevestiging)
+            if (aanpasRegels.length === 0) {
+                const id = aanpasId;
+                sluitAanpassen();
+                verwijderOrder(id);
+                return;
+            }
+            const knop = document.getElementById('aanpas-opslaan');
+            knop.disabled = true;
             fetch('bestelling.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     actie: 'bewerk_gerecht',
-                    id: id,
-                    gerecht: nieuwGerecht
+                    id: aanpasId,
+                    gerecht: aanpasRegels.map(r => `${r.aantal}x ${r.naam}`).join(', ')
                 })
             })
             .then(res => res.json())
             .then(data => {
+                knop.disabled = false;
                 if (data.succes) {
-                    laadData();
+                    sluitAanpassen();
                 } else {
-                    alert(data.melding || 'Fout bij opslaan van het gerecht.');
-                    laadData();
+                    document.getElementById('aanpas-melding').innerText = data.melding || 'Fout bij opslaan van het gerecht.';
                 }
+                laadData();
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('aanpas-melding').innerText = 'Kan de server niet bereiken.';
             });
         }
 

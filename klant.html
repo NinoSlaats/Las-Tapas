@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Las Tapas - Sabores de España</title>
+    <!-- Warm serif-lettertype voor de koppen (zoals op een Spaanse menukaart) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --rood: #b8383b;
-            --geel: #f4a261;
-            --creme: #fffaf0;
+            --rood: #a8232b;        /* flamencorood */
+            --geel: #e9a23b;        /* saffraan */
+            --creme: #fbf5ea;       /* gekalkte muur */
             --inkt: #2b1d19;
             --grijs: #7a6b63;
+            --azul: #1f4e8c;        /* kobaltblauw van de azulejos */
+            --terracota: #c0562f;
+            --oliva: #5f6f2f;
+            --kopfont: 'Fraunces', 'Georgia', serif;
         }
         
         body {
@@ -384,6 +392,58 @@
         .ongeldig-code div { max-width: 420px; }
         .ongeldig-code h2 { color: var(--rood); font-family: 'Georgia', serif; }
 
+        /* Serveerster roepen */
+        .hulp-knop {
+            background: #fff3e6; color: var(--rood); border: 1px solid var(--geel);
+            padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; font-family: inherit;
+        }
+        .hulp-knop:hover { background: white; }
+        .hulp-knop.actief { background: var(--geel); color: var(--inkt); }
+        .knop-kort { display: none; }
+        .reden-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; }
+        .reden-knop {
+            background: #fff8f0; border: 2px solid #e0ccb8; border-radius: 10px; padding: 12px 8px;
+            font-weight: bold; font-size: 0.85rem; color: var(--inkt); cursor: pointer; font-family: inherit;
+        }
+        .reden-knop.gekozen { border-color: var(--rood); background: #fff3e6; }
+        .oproep-balk {
+            display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+            background: #fff8e1; border-bottom: 1px solid #f5d98b; padding: 10px 16px; font-size: 0.9rem; text-align: center;
+        }
+        .oproep-balk.geaccepteerd { background: #eafaf1; border-bottom-color: #abebc6; }
+        .oproep-balk button {
+            background: white; border: 1px solid #e0ccb8; border-radius: 16px; padding: 5px 12px;
+            font-weight: bold; font-size: 0.8rem; color: var(--grijs); cursor: pointer; font-family: inherit;
+        }
+        .wacht-puntjes::after { content: ''; animation: puntjes 1.5s steps(4, end) infinite; }
+        @keyframes puntjes { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+        .welkom-melding { background: #eef4fb; border: 1px solid #c9dcf1; color: #1f4e8c; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; text-align: left; }
+
+        /* Bon bij het afrekenen */
+        .bon-keuze { background: #fffdf8; border: 1px dashed #e0ccb8; border-radius: 10px; padding: 10px 12px; margin: 0 0 12px 0; text-align: left; }
+        .bon-titel { font-weight: bold; margin: 0 0 8px 0; font-size: 0.9rem; }
+        .bon-opties { display: flex; gap: 6px; flex-wrap: wrap; }
+        .bon-optie {
+            flex: 1; min-width: 90px; background: white; border: 2px solid #e0ccb8; border-radius: 8px; padding: 8px 6px;
+            font-weight: bold; font-size: 0.8rem; color: var(--inkt); cursor: pointer; font-family: inherit;
+        }
+        .bon-optie.gekozen { border-color: var(--azul); background: #eef4fb; color: var(--azul); }
+        .bon-email { width: 100%; box-sizing: border-box; margin-top: 8px; padding: 10px; border: 1px solid #e0ccb8; border-radius: 6px; font-size: 16px; font-family: inherit; }
+        .bon-email.fout { border-color: var(--rood); background: #fdecea; }
+        .bon-uitleg { margin: 6px 0 0 0; font-size: 0.8rem; color: var(--grijs); min-height: 0; }
+        .bon-uitleg.fout { color: var(--rood); font-weight: bold; }
+
+        /* Beoordeling */
+        .sterren { display: flex; justify-content: center; gap: 6px; margin: 10px 0 4px 0; }
+        .sterren button {
+            background: none; border: none; font-size: 2.6rem; line-height: 1; color: #e3d6c6;
+            cursor: pointer; padding: 2px; transition: transform 0.1s, color 0.1s;
+        }
+        .sterren button.aan { color: var(--geel); }
+        .sterren button:active { transform: scale(1.2); }
+        .sterren-tekst { font-weight: bold; color: var(--grijs); margin: 0 0 15px 0; min-height: 1.2em; }
+
         /* Rekening in het betaalscherm */
         .rekening { background: #fff8f0; border: 1px solid #f2e3d3; border-radius: 10px; padding: 12px 14px; margin: 12px 0; text-align: left; }
         .rekening:empty { display: none; }
@@ -409,6 +469,85 @@
         .verleng-knoppen { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
         .verleng-secundair { background: #f2e3d3; border: 1px solid #e0ccb8; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; color: var(--grijs); }
 
+        /* ================= SPAANSE SFEER ================= */
+        body {
+            background-color: var(--creme);
+            background-image: radial-gradient(circle at 20% 0%, rgba(233, 162, 59, 0.10), transparent 45%),
+                              radial-gradient(circle at 90% 30%, rgba(192, 86, 47, 0.07), transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* Kop: rood met een vage tegelprint, en een echte rij azulejos eronder */
+        header {
+            position: relative;
+            background-color: var(--rood);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 28 28'%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%23ffffff' opacity='.07'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%23ffffff' opacity='.05'/%3E%3C/svg%3E"), linear-gradient(135deg, #b52a31, #8e1c23);
+            border-bottom: none;
+            margin-bottom: 14px;
+        }
+        header::after {
+            content: ''; position: absolute; left: 0; right: 0; bottom: -14px; height: 14px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 14px 14px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+        header h1 { font-family: var(--kopfont); font-weight: 800; letter-spacing: 0.5px; }
+        header h1 .ondertitel { display: block; font-family: 'Segoe UI', sans-serif; font-size: 0.7rem; font-weight: normal; letter-spacing: 3px; text-transform: uppercase; opacity: 0.85; }
+        .tafel-badge { border-color: rgba(233, 162, 59, 0.8); }
+
+        /* Koppen */
+        .modal-content h2, .menu-sectie h2, .status-sectie h2, .mandje h3 { font-family: var(--kopfont); font-weight: 800; }
+        .menu-sectie h2, .status-sectie h2 { color: var(--rood); border-bottom: none; position: relative; }
+        .menu-sectie h2::after, .status-sectie h2::after {
+            content: ''; display: block; width: 70px; height: 7px; margin-top: 6px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 7px 7px; border-radius: 2px;
+        }
+        .kop-ondertitel { display: block; font-family: 'Segoe UI', sans-serif; font-size: 0.8rem; font-weight: normal; color: var(--grijs); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+        /* Tabs en categorieknoppen */
+        .tab-btn.active { background: var(--rood); }
+        .cat-btn { border-color: #e6d3bd; }
+        .cat-btn.active, .cat-btn:hover { background: var(--azul); border-color: var(--azul); color: white; }
+        .cat-btn small { font-weight: normal; opacity: 0.75; margin-left: 3px; }
+
+        /* Gerechten als tegeltjes */
+        .product-kaart { border-color: #ecdcc8; border-top: 4px solid var(--terracota); }
+        .product-kaart:hover { border-top-color: var(--azul); }
+        .product-info h3 { font-family: var(--kopfont); font-weight: 600; color: var(--inkt); }
+        .knop-toevoegen {
+            background: linear-gradient(145deg, var(--geel), var(--terracota));
+            color: white; border: none; box-shadow: 0 2px 5px rgba(192, 86, 47, 0.35);
+        }
+        .knop-toevoegen:hover { background: linear-gradient(145deg, var(--terracota), var(--rood)); }
+        .knop-toevoegen:disabled { background: #d8d0c8; box-shadow: none; }
+        .cat-kop { font-family: var(--kopfont); font-weight: 800; }
+        .cat-kop small { font-family: 'Segoe UI', sans-serif; font-weight: normal; color: var(--grijs); margin-left: 4px; }
+
+        /* Mandje */
+        .mandje { border-top: none; position: relative; overflow: hidden; }
+        .mandje::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 10px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 10px 10px;
+        }
+        .bestel-knop { background: var(--oliva); }
+        .bestel-knop:hover { background: #4d5a24; }
+
+        /* Pop-ups met een tegelrand bovenaan */
+        .modal-content { border-top: none; position: relative; padding-top: 40px; }
+        .modal-content::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 14px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 14px 14px;
+        }
+        .pakket-optie h3 { font-family: var(--kopfont); }
+        .pakket-optie:hover, .pakket-optie.selected { border-color: var(--azul); }
+
+        /* Voettekst */
+        .voet { position: relative; margin-top: 40px; padding: 30px 16px 30px; text-align: center; color: var(--grijs); font-size: 0.85rem; }
+        .voet::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 10px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 10px 10px;
+        }
+        .voet strong { font-family: var(--kopfont); color: var(--rood); font-size: 1.1rem; display: block; margin-bottom: 4px; }
+
         /* Elementen die alleen op de telefoon zichtbaar zijn */
         .cat-kop, .mand-balk, .mand-achtergrond, .mand-sheet-kop, .in-mand { display: none; }
         .knop-toevoegen { position: relative; }
@@ -425,11 +564,22 @@
             .header-rechts { gap: 8px; }
             .tafel-badge { padding: 6px 12px; font-size: 0.8rem; }
             .betaal-knop { padding: 8px 12px; font-size: 0.8rem; }
+            .hulp-knop { padding: 8px 12px; font-size: 0.8rem; }
+            .knop-lang { display: none; }
+            .knop-kort { display: inline; }
+            .reden-grid { grid-template-columns: 1fr; }
 
             html, body { overflow-x: clip; }
             .container { grid-template-columns: minmax(0, 1fr); padding: 0 12px; margin: 12px auto; gap: 0; }
             .container > div { min-width: 0; }
             header h1 { white-space: nowrap; }
+            header h1 .ondertitel { display: none; }
+        }
+        @media (max-width: 480px) {
+            header > div:first-child { flex-basis: 100%; }
+            .header-rechts { width: 100%; justify-content: space-between; }
+            .modal-content { padding-top: 34px !important; }
+            .mandje::before { display: none; }
 
             /* Tabs Menu / Mijn bestellingen */
             .nav-tabs { gap: 8px; margin-bottom: 12px; }
@@ -550,13 +700,14 @@
             .mand-balk.bump, .betaal-stap.bezig .stap-bol { animation: none; }
         }
     </style>
+    <script src="taal.js" defer></script>
 </head>
 <body>
 
     <!-- Welkomst Modal -->
     <div id="sessie-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>¡Bienvenido a Las Tapas!</h2>
+            <h2>¡Bienvenidos a Las Tapas!</h2>
             <p style="color: var(--grijs); font-size: 0.9rem;">Vul je gegevens in om het menu te bekijken:</p>
             
             <div class="input-groep">
@@ -583,6 +734,7 @@
             
             <div id="pakket-opties"><p style="color: var(--grijs); font-style: italic;">Arrangementen laden...</p></div>
 
+            <p id="welkom-melding" class="welkom-melding" style="display: none;">ℹ️ Jullie vorige bezoek aan deze tafel is afgesloten. Welkom! Vul jullie gegevens opnieuw in.</p>
             <p id="modal-fout" style="color: var(--rood); font-weight: bold; font-size: 0.85rem; margin-top: 10px;"></p>
         </div>
     </div>
@@ -590,8 +742,18 @@
     <!-- Betaalmethode Modal -->
     <div id="betaal-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
-            <h2>Kies je betaalmethode</h2>
+            <h2>La Cuenta <span class="kop-ondertitel">Kies je betaalmethode</span></h2>
             <div id="rekening-overzicht" class="rekening"></div>
+            <div class="bon-keuze">
+                <p class="bon-titel">🧾 Wil je een bon?</p>
+                <div class="bon-opties">
+                    <button type="button" class="bon-optie gekozen" data-bon="geen" onclick="kiesBon('geen')">Geen bon</button>
+                    <button type="button" class="bon-optie" data-bon="email" onclick="kiesBon('email')">📧 Per e-mail</button>
+                    <button type="button" class="bon-optie" data-bon="papier" onclick="kiesBon('papier')">🧾 Op papier</button>
+                </div>
+                <input type="email" id="bon-email" class="bon-email" placeholder="jouw@email.nl" autocomplete="email" hidden>
+                <p id="bon-uitleg" class="bon-uitleg"></p>
+            </div>
             <p style="color: var(--grijs); font-size: 0.9rem;">Hoe willen jullie de rekening voldoen?</p>
             
             <div class="betaal-optie-grid">
@@ -636,8 +798,67 @@
                 <div class="stap-lijn"></div>
                 <div class="betaal-stap" id="stap-geaccepteerd"><span class="stap-bol">2</span><span>Serveerster onderweg</span></div>
             </div>
+            <p id="bon-slot-info" class="bon-uitleg" style="display: none; margin-top: 10px;"></p>
             <p id="contant-modal-tekst" style="font-size: 1.05rem; color: var(--inkt); margin: 20px 0; line-height: 1.5;"></p>
             <p style="font-size: 0.85rem; color: var(--grijs);">⏳ Een moment geduld. Dit scherm sluit automatisch zodra de betaling is afgerond.</p>
+        </div>
+    </div>
+
+    <!-- Tafel is al in gebruik: aansluiten bij het gezelschap -->
+    <div id="aansluit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>¡Hola! <span class="kop-ondertitel">Deze tafel is al in gebruik</span></h2>
+            <p id="aansluit-tekst" style="line-height: 1.5;"></p>
+            <p style="font-weight: bold;">Hoor je bij dit gezelschap?</p>
+            <button class="bestel-knop" id="aansluit-knop" onclick="sluitAan()">✅ Ja, aansluiten</button>
+            <button class="verleng-secundair" style="width: 100%; margin-top: 8px;" onclick="nietMijnTafel()">Nee, dit is niet mijn tafel</button>
+            <p id="aansluit-melding" style="font-size: 0.9rem; color: var(--grijs); margin-top: 12px;"></p>
+        </div>
+    </div>
+
+    <!-- Beoordeling na het betalen -->
+    <div id="review-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div id="review-vragen">
+                <h2>¿Qué tal? <span class="kop-ondertitel">Hoe was het bij Las Tapas?</span></h2>
+                <p style="color: var(--grijs);">Bedankt voor jullie bezoek! Laat je weten hoe je het vond?</p>
+                <div class="sterren" id="sterren">
+                    <button type="button" data-ster="1" onclick="kiesSterren(1)" aria-label="1 ster">★</button>
+                    <button type="button" data-ster="2" onclick="kiesSterren(2)" aria-label="2 sterren">★</button>
+                    <button type="button" data-ster="3" onclick="kiesSterren(3)" aria-label="3 sterren">★</button>
+                    <button type="button" data-ster="4" onclick="kiesSterren(4)" aria-label="4 sterren">★</button>
+                    <button type="button" data-ster="5" onclick="kiesSterren(5)" aria-label="5 sterren">★</button>
+                </div>
+                <p id="sterren-tekst" class="sterren-tekst">Tik op de sterren</p>
+                <label for="review-tekst" class="opmerking-label" style="text-align: left;">Wil je nog iets kwijt? (optioneel)</label>
+                <textarea id="review-tekst" class="opmerking-veld" maxlength="300" rows="3" placeholder="Wat vond je lekker, wat kan beter?"></textarea>
+                <button class="bestel-knop" id="review-verstuur" onclick="verstuurReview()" disabled>Beoordeling versturen</button>
+                <button class="verleng-secundair" style="width: 100%; margin-top: 8px;" onclick="sluitReview()">Overslaan</button>
+                <p id="review-melding" style="font-size: 0.85rem; color: var(--rood); font-weight: bold;"></p>
+            </div>
+            <div id="review-bedankt" style="display: none;">
+                <h2>¡Muchas gracias!</h2>
+                <p>Bedankt voor je beoordeling. Graag tot ziens bij Las Tapas! 👋</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Serveerster roepen -->
+    <div id="roep-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>🙋 Serveerster roepen</h2>
+            <p style="color: var(--grijs); font-size: 0.9rem;">Waarmee kunnen we helpen? Kies een onderwerp.</p>
+            <div class="reden-grid">
+                <button type="button" class="reden-knop" data-reden="vraag" onclick="kiesReden('vraag')">❓ Ik heb een vraag</button>
+                <button type="button" class="reden-knop" data-reden="probleem" onclick="kiesReden('probleem')">⚠️ Probleem met bestelling</button>
+                <button type="button" class="reden-knop" data-reden="allergie" onclick="kiesReden('allergie')">🥜 Allergie of dieet</button>
+                <button type="button" class="reden-knop" data-reden="anders" onclick="kiesReden('anders')">💬 Iets anders</button>
+            </div>
+            <label for="roep-tekst" class="opmerking-label" style="text-align: left;">Toelichting (optioneel)</label>
+            <textarea id="roep-tekst" class="opmerking-veld" maxlength="200" rows="2" placeholder="Bijv. we missen nog de patatas bravas"></textarea>
+            <button class="bestel-knop" id="roep-verstuur" onclick="verstuurOproep()">Roep een serveerster</button>
+            <button class="verleng-secundair" style="width: 100%; margin-top: 8px;" onclick="sluitRoepModal()">Annuleren</button>
+            <p id="roep-melding" style="font-size: 0.85rem; color: var(--rood); font-weight: bold;"></p>
         </div>
     </div>
 
@@ -657,16 +878,23 @@
 
     <header>
         <div>
-            <h1>🍷 Las Tapas</h1>
+            <h1>🍷 Las Tapas <span class="ondertitel">Taberna española · all you can eat</span></h1>
             <small id="gekozen-pakket-label" style="color: #faedcd; font-style: italic;"></small>
         </div>
         <div class="header-rechts">
+            <span id="taal-plek"></span>
             <div class="tafel-badge" id="tafel-label">Tafel 1</div>
-            <button class="betaal-knop" onclick="vraagRekening()">💳 Klaar, ik wil betalen</button>
+            <button class="hulp-knop" id="hulp-knop" onclick="openRoepModal()">🙋 <span class="knop-lang">Serveerster roepen</span><span class="knop-kort">Hulp</span></button>
+            <button class="betaal-knop" onclick="vraagRekening()">💳 <span class="knop-lang">Klaar, ik wil betalen</span><span class="knop-kort">Betalen</span></button>
         </div>
     </header>
 
     <!-- Tot wanneer kunnen de gasten dineren? -->
+    <div class="oproep-balk" id="oproep-balk" style="display: none;">
+        <span id="oproep-balk-tekst"></span>
+        <button id="oproep-annuleer" onclick="annuleerOproep()">Annuleren</button>
+    </div>
+
     <div class="tijd-balk" id="tijd-balk" style="display: none;">
         <span id="tijd-balk-tekst"></span>
         <button id="tijd-balk-knop" onclick="openVerlengModal(tijdIsOm())">Tijd verlengen</button>
@@ -682,15 +910,15 @@
             <!-- Tab 1: Menu -->
             <div id="tab-menu" class="tab-content active">
                 <div class="menu-sectie">
-                    <h2>Nuestra Carta</h2>
+                    <h2>Nuestra Carta <span class="kop-ondertitel">Onze kaart · onbeperkt tapas</span></h2>
                     <p class="allergie-info">⚠️ Allergie of dieetwens? Zet het in de opmerking bij je bestelling of vraag het personeel.</p>
                     
                     <div class="categorie-balk">
-                        <button class="cat-btn active" onclick="filterMenu('alles', this)">✨ Alles</button>
-                        <button class="cat-btn" onclick="filterMenu('voorgerecht', this)">🫒 Voorgerechten</button>
-                        <button class="cat-btn" onclick="filterMenu('hoofdgerecht', this)">🔥 Warme Tapas</button>
-                        <button class="cat-btn" onclick="filterMenu('drankje', this)">🍷 Drankjes</button>
-                        <button class="cat-btn" onclick="filterMenu('toetje', this)">🍨 Toetjes</button>
+                        <button class="cat-btn active" onclick="filterMenu('alles', this)">✨ Todo <small>alles</small></button>
+                        <button class="cat-btn" onclick="filterMenu('voorgerecht', this)">🫒 Entrantes <small>voorgerechten</small></button>
+                        <button class="cat-btn" onclick="filterMenu('hoofdgerecht', this)">🔥 Tapas calientes <small>warm</small></button>
+                        <button class="cat-btn" onclick="filterMenu('drankje', this)">🍷 Bebidas <small>drankjes</small></button>
+                        <button class="cat-btn" onclick="filterMenu('toetje', this)">🍮 Postres <small>toetjes</small></button>
                     </div>
 
                     <div class="menuraster" id="menu-raster"></div>
@@ -700,7 +928,7 @@
             <!-- Tab 2: Bestelstatus -->
             <div id="tab-bestellingen" class="tab-content">
                 <div class="status-sectie">
-                    <h2>Bestellingen Tafel <span id="tafel-nummer-titel">1</span></h2>
+                    <h2>Tus Pedidos · Tafel <span id="tafel-nummer-titel">1</span> <span class="kop-ondertitel">Jullie bestellingen, live bijgewerkt</span></h2>
                     <p style="color: var(--grijs); font-size: 0.9rem;">Gezelschap van <span id="gast-naam-titel" style="font-weight: bold;"></span> (<span id="gezelschap-titel"></span>).</p>
                     <div id="mijn-bestellingen-lijst" style="margin-top: 15px;">
                         <p style="color: var(--grijs); font-style: italic;">Laden...</p>
@@ -715,7 +943,7 @@
                 <span class="mand-greep"></span>
                 <button class="mand-sluit" onclick="sluitMandSheet()" aria-label="Mandje sluiten">✕</button>
             </div>
-            <h3>Jouw Bestelling</h3>
+            <h3>Tu Pedido <span class="kop-ondertitel">Jouw bestelling</span></h3>
             <div class="mand-regels" id="mand-regels">
                 <p style="color: var(--grijs); font-style: italic; text-align: center;">Je mandje is nog leeg</p>
             </div>
@@ -731,6 +959,11 @@
             <p id="melding"></p>
         </div>
     </div>
+
+    <footer class="voet">
+        <strong>¡Buen provecho!</strong>
+        Las Tapas · Taberna española · Allergie of vraag? Tik op 🙋 bovenin.
+    </footer>
 
     <!-- Alleen op de telefoon: balk onderin + donkere achtergrond achter het mandje -->
     <div class="mand-achtergrond" id="mand-achtergrond" onclick="sluitMandSheet()"></div>
@@ -760,9 +993,19 @@
                         try {
                             const body = JSON.parse(opties.body);
                             body.code = TAFEL_CODE;
+                            // Sessiecode van dit bezoek (zodat een afgesloten bezoek de tafel niet opnieuw opent)
+                            const tafel = new URLSearchParams(window.location.search).get('tafel') || '1';
+                            body.sessie = localStorage.getItem(`gast_sessie_tafel_${tafel}`) || '';
                             opties.body = JSON.stringify(body);
                         } catch (e) { /* geen JSON: niets toevoegen */ }
                     }
+                    // Antwoord "sessie verlopen"? Dan is het bezoek afgesloten: terug naar het welkomstscherm
+                    return origineleFetch(url, opties).then(res => {
+                        res.clone().json().then(data => {
+                            if (data && data.code === 'sessie_verlopen' && window.sessieVerlopen) window.sessieVerlopen();
+                        }).catch(() => {});
+                        return res;
+                    });
                 }
                 return origineleFetch(url, opties);
             };
@@ -778,6 +1021,7 @@
         let aantalVolw = parseInt(localStorage.getItem(`gast_volw_tafel_${tafelNummer}`)) || 2;
         let aantalSenioren = parseInt(localStorage.getItem(`gast_sen_tafel_${tafelNummer}`)) || 0;
         let aantalKind = parseInt(localStorage.getItem(`gast_kind_tafel_${tafelNummer}`)) || 0;
+        let mijnSessie = localStorage.getItem(`gast_sessie_tafel_${tafelNummer}`) || '';
 
         let menuItems = [];   // komt uit de database (via view=config)
 
@@ -806,7 +1050,10 @@
             return config && config.drankprijzen ? config.drankprijzen[naam] : undefined;
         }
         function wisLokaleSessie() {
-            ['naam', 'pakket', 'volw', 'sen', 'kind'].forEach(k => localStorage.removeItem(`gast_${k}_tafel_${tafelNummer}`));
+            ['naam', 'pakket', 'volw', 'sen', 'kind', 'sessie'].forEach(k => localStorage.removeItem(`gast_${k}_tafel_${tafelNummer}`));
+            huidigeGastNaam = '';
+            gekozenPakket = '';
+            mijnSessie = '';
         }
 
         function renderPakketten() {
@@ -828,7 +1075,7 @@
         // Geen of een verkeerde tafelcode: niet laten bestellen
         function toonOngeldigeCode() {
             if (document.getElementById('ongeldig-code')) return;
-            ['sessie-modal', 'betaal-modal', 'qr-modal', 'contant-modal', 'verleng-modal'].forEach(id =>
+            ['sessie-modal', 'betaal-modal', 'qr-modal', 'contant-modal', 'verleng-modal', 'roep-modal', 'aansluit-modal'].forEach(id =>
                 document.getElementById(id).style.display = 'none');
             const div = document.createElement('div');
             div.id = 'ongeldig-code';
@@ -879,16 +1126,31 @@
                 })
                 .then(tafels => {
                     const info = tafels[tafelNummer];
-                    if (info && (info.status === 'betalen' || info.status === 'geaccepteerd')) {
-                        toonBetaalSlot(info);
-                        startBetaalPolling();
-                    } else if (huidigeGastNaam && gekozenPakket) {
-                        document.getElementById('sessie-modal').style.display = 'none';
-                        updateHeaderInfo();
-                        meldTafelBezet();
+                    const lokaalBezoek = !!(huidigeGastNaam && gekozenPakket);
+                    // Hoort deze telefoon bij het bezoek dat nu aan de tafel zit?
+                    const hoortErbij = !!info && (info.sessie === '' || info.sessie === mijnSessie);
+
+                    if (lokaalBezoek && hoortErbij) {
+                        if (info.status === 'betalen' || info.status === 'geaccepteerd') {
+                            toonBetaalSlot(info);
+                            startBetaalPolling();
+                        } else {
+                            document.getElementById('sessie-modal').style.display = 'none';
+                            updateHeaderInfo();
+                            meldTafelBezet();
+                        }
+                    } else if (lokaalBezoek && !hoortErbij) {
+                        // Het vorige bezoek is afgesloten (of er zit nu iemand anders): oude gegevens weg
+                        wisLokaleSessie();
+                        if (info) toonAansluiten(info);
+                        else toonWelkom(true);
+                    } else if (info) {
+                        // Nieuwe telefoon aan een tafel die al in gebruik is
+                        toonAansluiten(info);
                     } else {
-                        document.getElementById('sessie-modal').style.display = 'flex';
+                        toonWelkom(sessionStorage.getItem('bezoek_afgesloten') === '1');
                     }
+                    sessionStorage.removeItem('bezoek_afgesloten');
                 })
                 .catch(err => {
                     console.error('Fout bij controleren tafelstatus:', err);
@@ -983,9 +1245,101 @@
                 body: JSON.stringify(payload)
             })
             .then(res => res.json())
-            .then(() => laadTafelInfo())
+            .then(data => {
+                if (data.succes && data.sessie) {
+                    mijnSessie = data.sessie;
+                    localStorage.setItem(`gast_sessie_tafel_${tafelNummer}`, mijnSessie);
+                } else if (data.code === 'tafel_bezet') {
+                    // Iemand anders heeft de tafel net aangemeld
+                    wisLokaleSessie();
+                    toonAansluiten(data.tafel);
+                    return;
+                }
+                laadTafelInfo();
+            })
             .catch(err => console.error('Fout bij bijwerken tafelstatus:', err));
         }
+
+        // ===== Welkom, aansluiten en afgesloten bezoek =====
+        function toonWelkom(metMelding) {
+            document.getElementById('aansluit-modal').style.display = 'none';
+            document.getElementById('welkom-melding').style.display = metMelding ? 'block' : 'none';
+            document.getElementById('sessie-modal').style.display = 'flex';
+        }
+
+        let aansluitInfo = null;
+        function toonAansluiten(info) {
+            aansluitInfo = info;
+            const personen = (Number(info.volw) || 0) + (Number(info.sen) || 0) + (Number(info.kind) || 0);
+            document.getElementById('aansluit-tekst').innerHTML =
+                `Tafel ${esc(tafelNummer)} is al in gebruik door <strong>${esc(info.gast_naam || 'een gezelschap')}</strong>` +
+                ` (${personen} ${personen === 1 ? 'persoon' : 'personen'}, ${esc(info.pakket || '')}).`;
+            document.getElementById('aansluit-melding').innerText = '';
+            document.getElementById('sessie-modal').style.display = 'none';
+            document.getElementById('aansluit-modal').style.display = 'flex';
+        }
+
+        function sluitAan() {
+            const knop = document.getElementById('aansluit-knop');
+            knop.disabled = true;
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actie: 'aansluiten', tafel: parseInt(tafelNummer) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                knop.disabled = false;
+                if (!data.succes) {
+                    document.getElementById('aansluit-melding').innerText = data.melding || 'Aansluiten is niet gelukt.';
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
+                // Gegevens van het gezelschap overnemen
+                huidigeGastNaam = data.gast_naam;
+                gekozenPakket = data.pakket;
+                aantalVolw = data.volw;
+                aantalSenioren = data.sen;
+                aantalKind = data.kind;
+                mijnSessie = data.sessie;
+                localStorage.setItem(`gast_naam_tafel_${tafelNummer}`, huidigeGastNaam);
+                localStorage.setItem(`gast_pakket_tafel_${tafelNummer}`, gekozenPakket);
+                localStorage.setItem(`gast_volw_tafel_${tafelNummer}`, aantalVolw);
+                localStorage.setItem(`gast_sen_tafel_${tafelNummer}`, aantalSenioren);
+                localStorage.setItem(`gast_kind_tafel_${tafelNummer}`, aantalKind);
+                localStorage.setItem(`gast_sessie_tafel_${tafelNummer}`, mijnSessie);
+
+                document.getElementById('aansluit-modal').style.display = 'none';
+                updateHeaderInfo();
+                renderMenu();
+                renderMandje();
+                if (data.status === 'betalen' || data.status === 'geaccepteerd') {
+                    laadTafelInfo().then(info => { if (info) toonBetaalSlot(info); });
+                    startBetaalPolling();
+                } else {
+                    laadTafelInfo();
+                }
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('aansluit-melding').innerText = 'Kan de server niet bereiken.';
+            });
+        }
+
+        function nietMijnTafel() {
+            document.getElementById('aansluit-melding').innerText =
+                'Scan de QR-code die op je eigen tafel staat, of vraag het personeel om hulp.';
+        }
+
+        // Het bezoek is afgesloten door het personeel: terug naar het welkomstscherm
+        let sessieVerlopenBezig = false;
+        window.sessieVerlopen = function () {
+            if (sessieVerlopenBezig) return;
+            sessieVerlopenBezig = true;
+            wisLokaleSessie();
+            sessionStorage.setItem('bezoek_afgesloten', '1');
+            location.reload();
+        };
 
         // ===== Tafelgegevens: rekening en eindtijd =====
         function laadTafelInfo() {
@@ -999,16 +1353,21 @@
                     if (!tafelInfo && huidigeGastNaam && !betaalPollInterval) {
                         tafelNietGevonden++;
                         if (tafelNietGevonden >= 2) {
-                            wisLokaleSessie();
-                            location.reload();
+                            bezoekAfgesloten();
                             return null;
                         }
                     } else {
                         tafelNietGevonden = 0;
                     }
+                    // Zit er inmiddels een ander gezelschap aan deze tafel? Dan is ons bezoek voorbij
+                    if (tafelInfo && tafelInfo.sessie && mijnSessie && tafelInfo.sessie !== mijnSessie) {
+                        window.sessieVerlopen();
+                        return null;
+                    }
 
                     updateTijdBalk();
                     updateRondeInfo();
+                    updateOproepBalk();
                     return tafelInfo;
                 })
                 .catch(err => console.error('Fout bij ophalen tafelgegevens:', err));
@@ -1155,6 +1514,185 @@
             });
         }
 
+        // ===== Beoordeling na het betalen =====
+        let gekozenSterren = 0;
+        let reviewGetoond = false;
+        const STERREN_TEKST = ['', 'Slecht', 'Matig', 'Goed', 'Erg goed', '¡Excelente!'];
+
+        // Tafel afgesloten: na een betaling om een beoordeling vragen, anders gewoon opnieuw beginnen
+        function bezoekAfgesloten() {
+            if (reviewGetoond || sessieVerlopenBezig) return;
+            fetch(`bestelling.php?view=review_mogelijk&tafel=${tafelNummer}&_=` + Date.now(), { cache: 'no-store' })
+                .then(res => res.json())
+                .then(data => { if (data && data.mogelijk) toonReview(); else window.sessieVerlopen(); })
+                .catch(() => window.sessieVerlopen());
+        }
+
+        // De tafel is afgesloten: eerst om een beoordeling vragen, daarna opnieuw beginnen
+        function toonReview() {
+            if (reviewGetoond) return;
+            reviewGetoond = true;
+            if (betaalPollInterval) { clearInterval(betaalPollInterval); betaalPollInterval = null; }
+            if (oproepPollTimer) { clearInterval(oproepPollTimer); oproepPollTimer = null; }
+            ['sessie-modal', 'betaal-modal', 'qr-modal', 'contant-modal', 'verleng-modal', 'roep-modal', 'aansluit-modal'].forEach(id =>
+                document.getElementById(id).style.display = 'none');
+            sluitMandSheet();
+            wisLokaleSessie();
+            document.getElementById('review-modal').style.display = 'flex';
+        }
+
+        function kiesSterren(n) {
+            gekozenSterren = n;
+            document.querySelectorAll('#sterren button').forEach(b => b.classList.toggle('aan', Number(b.dataset.ster) <= n));
+            document.getElementById('sterren-tekst').innerText = STERREN_TEKST[n];
+            document.getElementById('review-verstuur').disabled = false;
+        }
+
+        function verstuurReview() {
+            const knop = document.getElementById('review-verstuur');
+            knop.disabled = true;
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actie: 'review',
+                    tafel: parseInt(tafelNummer),
+                    sterren: gekozenSterren,
+                    tekst: document.getElementById('review-tekst').value.trim()
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.succes) {
+                    document.getElementById('review-vragen').style.display = 'none';
+                    document.getElementById('review-bedankt').style.display = 'block';
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    // Geen beoordeling mogelijk (bijv. te lang geleden): gewoon opnieuw beginnen
+                    document.getElementById('review-melding').innerText = data.melding || 'Versturen is niet gelukt.';
+                    setTimeout(() => location.reload(), 2500);
+                }
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('review-melding').innerText = 'Kan de server niet bereiken.';
+            });
+        }
+
+        function sluitReview() {
+            location.reload();
+        }
+
+        // ===== Serveerster roepen =====
+        let gekozenReden = 'vraag';
+        let oproepPollTimer = null;
+        let vorigeOproepStatus = '';
+
+        function openRoepModal() {
+            if (!tafelInfo) {
+                alert('Vul eerst je naam in en kies een arrangement.');
+                return;
+            }
+            // Loopt er al een oproep? Dan niet nog een keer roepen
+            if (tafelInfo.oproep_status) {
+                const balk = document.getElementById('oproep-balk');
+                balk.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            kiesReden('vraag');
+            document.getElementById('roep-tekst').value = '';
+            document.getElementById('roep-melding').innerText = '';
+            document.getElementById('roep-modal').style.display = 'flex';
+        }
+
+        function sluitRoepModal() {
+            document.getElementById('roep-modal').style.display = 'none';
+        }
+
+        function kiesReden(reden) {
+            gekozenReden = reden;
+            document.querySelectorAll('.reden-knop').forEach(k => k.classList.toggle('gekozen', k.dataset.reden === reden));
+        }
+
+        function verstuurOproep() {
+            const knop = document.getElementById('roep-verstuur');
+            knop.disabled = true;
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actie: 'roep',
+                    tafel: parseInt(tafelNummer),
+                    reden: gekozenReden,
+                    tekst: document.getElementById('roep-tekst').value.trim()
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                knop.disabled = false;
+                if (data.succes) {
+                    tafelInfo = data.tafel;
+                    sluitRoepModal();
+                    updateOproepBalk();
+                } else {
+                    document.getElementById('roep-melding').innerText = data.melding || 'Roepen is niet gelukt.';
+                    laadTafelInfo();
+                }
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('roep-melding').innerText = 'Kan de server niet bereiken.';
+            });
+        }
+
+        function annuleerOproep() {
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actie: 'roep_annuleer', tafel: parseInt(tafelNummer) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.succes) alert(data.melding || 'Annuleren is niet gelukt.');
+                laadTafelInfo();
+            });
+        }
+
+        // Balk bovenin bijwerken: verstuurd -> geaccepteerd -> (weg na afhandelen)
+        function updateOproepBalk() {
+            const balk = document.getElementById('oproep-balk');
+            const tekst = document.getElementById('oproep-balk-tekst');
+            const annuleer = document.getElementById('oproep-annuleer');
+            const hulpKnop = document.getElementById('hulp-knop');
+            const status = tafelInfo ? tafelInfo.oproep_status : '';
+
+            if (status === 'open') {
+                balk.style.display = 'flex';
+                balk.classList.remove('geaccepteerd');
+                tekst.innerHTML = '🙋 Je oproep is verstuurd. Een serveerster komt zo snel mogelijk<span class="wacht-puntjes"></span>';
+                annuleer.style.display = 'inline-block';
+            } else if (status === 'geaccepteerd') {
+                balk.style.display = 'flex';
+                balk.classList.add('geaccepteerd');
+                const wie = tafelInfo.oproep_door ? `<strong>${esc(tafelInfo.oproep_door)}</strong>` : 'Een serveerster';
+                tekst.innerHTML = `✅ ${wie} heeft je oproep geaccepteerd en komt naar tafel ${esc(tafelNummer)}.`;
+                annuleer.style.display = 'none';
+            } else {
+                balk.style.display = 'none';
+                if (vorigeOproepStatus === 'geaccepteerd') toonBalkMelding('✅ Oproep afgehandeld');
+            }
+            hulpKnop.classList.toggle('actief', !!status);
+            vorigeOproepStatus = status || '';
+
+            // Zolang er een oproep loopt, vaker kijken of de serveerster heeft geaccepteerd
+            if (status && !oproepPollTimer) {
+                oproepPollTimer = setInterval(laadTafelInfo, 3000);
+            } else if (!status && oproepPollTimer) {
+                clearInterval(oproepPollTimer);
+                oproepPollTimer = null;
+            }
+        }
+
         // ===== Betalen =====
         function renderRekening(info) {
             const el = document.getElementById('rekening-overzicht');
@@ -1178,7 +1716,45 @@
             document.getElementById('betaal-modal').style.display = 'none';
         }
 
+        // ===== Bon: geen, per e-mail of op papier =====
+        let bonKeuze = 'geen';
+        function kiesBon(keuze) {
+            bonKeuze = keuze;
+            document.querySelectorAll('.bon-optie').forEach(b => b.classList.toggle('gekozen', b.dataset.bon === keuze));
+            const veld = document.getElementById('bon-email');
+            const uitleg = document.getElementById('bon-uitleg');
+            veld.hidden = keuze !== 'email';
+            veld.classList.remove('fout');
+            uitleg.classList.remove('fout');
+            uitleg.innerText = keuze === 'email' ? 'De bon wordt gemaild zodra de betaling is afgerond.'
+                             : keuze === 'papier' ? 'De serveerster neemt een papieren bon voor je mee.' : '';
+            if (keuze === 'email') {
+                const bewaard = localStorage.getItem('bon_email') || '';
+                if (!veld.value && bewaard) veld.value = bewaard;
+                veld.focus();
+            }
+        }
+
+        // Geeft false terug als het e-mailadres nog niet klopt
+        function controleerBon() {
+            if (bonKeuze !== 'email') return true;
+            const veld = document.getElementById('bon-email');
+            const adres = veld.value.trim();
+            const geldig = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(adres);
+            if (!geldig) {
+                veld.classList.add('fout');
+                const uitleg = document.getElementById('bon-uitleg');
+                uitleg.classList.add('fout');
+                uitleg.innerText = 'Vul een geldig e-mailadres in voor de bon.';
+                veld.focus();
+                return false;
+            }
+            localStorage.setItem('bon_email', adres);
+            return true;
+        }
+
         function kiesBetaalMethode(methode) {
+            if (!controleerBon()) return;
             document.getElementById('betaal-modal').style.display = 'none';
 
             if (methode === 'online') {
@@ -1202,7 +1778,10 @@
                     actie: 'update_tafel_status',
                     tafel: parseInt(tafelNummer),
                     status: 'betalen',
-                    betaalmethode: betaalmethode
+                    betaalmethode: betaalmethode,
+                    bon_keuze: bonKeuze,
+                    bon_email: bonKeuze === 'email' ? document.getElementById('bon-email').value.trim() : '',
+                    bon_taal: localStorage.getItem('taal') || 'nl'
                 })
             })
             .then(res => res.json())
@@ -1217,7 +1796,7 @@
 
         // Scherm "op slot" zolang de betaling loopt (contant of online-controle)
         function toonBetaalSlot(info) {
-            ['sessie-modal', 'betaal-modal', 'qr-modal', 'verleng-modal'].forEach(id =>
+            ['sessie-modal', 'betaal-modal', 'qr-modal', 'verleng-modal', 'roep-modal', 'aansluit-modal'].forEach(id =>
                 document.getElementById(id).style.display = 'none');
             document.getElementById('contant-modal').style.display = 'flex';
             sluitMandSheet();
@@ -1230,6 +1809,12 @@
             const lijn = document.querySelector('#contant-modal .stap-lijn');
 
             document.getElementById('betaal-slot-titel').innerText = online ? 'Betaling controleren' : 'Contant betalen';
+            const bonInfo = document.getElementById('bon-slot-info');
+            const keuze = info.bon_keuze || bonKeuze;
+            const adres = info.bon_email || (keuze === 'email' ? document.getElementById('bon-email').value.trim() : '');
+            bonInfo.innerHTML = keuze === 'email' ? `📧 De bon wordt gemaild naar <strong>${esc(adres)}</strong>`
+                              : keuze === 'papier' ? '🧾 De serveerster neemt een papieren bon mee' : '';
+            bonInfo.style.display = bonInfo.innerHTML ? 'block' : 'none';
 
             if (info.status === 'geaccepteerd') {
                 tekstEl.innerHTML = online
@@ -1267,8 +1852,7 @@
                         } else {
                             clearInterval(betaalPollInterval);
                             betaalPollInterval = null;
-                            wisLokaleSessie();
-                            location.reload();
+                            bezoekAfgesloten();
                         }
                     })
                     .catch(err => console.error('Fout bij controleren betaalstatus:', err));
@@ -1311,10 +1895,10 @@
             }
 
             const categorieNamen = {
-                voorgerecht: '🫒 Voorgerechten',
-                hoofdgerecht: '🔥 Warme tapas',
-                drankje: '🍷 Drankjes',
-                toetje: '🍨 Toetjes'
+                voorgerecht: '🫒 Entrantes <small>voorgerechten</small>',
+                hoofdgerecht: '🔥 Tapas calientes <small>warme tapas</small>',
+                drankje: '🍷 Bebidas <small>drankjes</small>',
+                toetje: '🍮 Postres <small>toetjes</small>'
             };
             let vorigeCategorie = null;
 
@@ -1618,6 +2202,7 @@
                                 </div>
                                 <div style="font-size: 0.95rem; color: var(--inkt);">
                                     ${esc(b.gerecht)}
+                                    ${Number(b.aangepast) ? `<div style="font-size: 0.8rem; color: #6c3483; font-weight: bold; margin-top: 4px;">✏️ Aangepast door de keuken</div>` : ''}
                                     ${b.opmerking ? `<div style="font-size: 0.8rem; color: var(--grijs); margin-top: 4px;">📝 ${esc(b.opmerking)}</div>` : ''}
                                 </div>
                             </div>
@@ -1636,7 +2221,7 @@
             } else {
                 laadVoorraadData();
             }
-            if (!betaalPollInterval && huidigeGastNaam) laadTafelInfo();
+            if (!betaalPollInterval && huidigeGastNaam && !reviewGetoond) laadTafelInfo();
         }, 6000);
     </script>
 </body>

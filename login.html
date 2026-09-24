@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Las Tapas - Medewerker Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #fdfbf7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 320px; box-sizing: border-box; border-left: 6px solid #b33939; }
@@ -13,12 +16,26 @@
         button { width: 100%; padding: 12px; background: #b33939; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         button:hover { background: #822626; }
         .login-fout { background: #fdecea; color: #922b21; border: 1px solid #f5c6c0; border-radius: 6px; padding: 10px; font-size: 0.85rem; }
+        /* Spaanse sfeer: flamencorood, gekalkte muur en azulejo-tegels */
+        body { background: #fbf5ea radial-gradient(circle at 20% 0%, rgba(233, 162, 59, 0.15), transparent 50%); }
+        .login-card { position: relative; overflow: hidden; border-left: none; padding-top: 42px; }
+        .login-card::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 14px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 14px 14px;
+        }
+        h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 800; color: #a8232b; }
+        button { background: #a8232b; }
+        button:hover { background: #7e1a20; }
+        .spaans { font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: #786a63; margin: -10px 0 4px 0; }
     </style>
+    <script src="taal.js" defer></script>
 </head>
 <body>
 
     <div class="login-card">
+        <span id="taal-plek" style="position: absolute; top: 22px; right: 14px;"></span>
         <h2>🍷 Las Tapas</h2>
+        <p class="spaans">Taberna española</p>
         <p style="font-size: 0.85rem; color: #786a63;">Inloggen voor personeel</p>
         
         <p id="login-fout" class="login-fout" style="display: none;"></p>

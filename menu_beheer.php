@@ -6,6 +6,7 @@
  */
 session_start();
 require __DIR__ . '/gedeeld.php';
+require_once __DIR__ . '/mailer.php';
 vereisBaas();
 set_exception_handler('toonFoutPagina');
 db();
@@ -42,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $omschrijving = mb_substr(trim($_POST['omschrijving'] ?? ''), 0, 255);
         $categorie = array_key_exists($_POST['categorie'] ?? '', CATEGORIEEN) ? $_POST['categorie'] : 'hoofdgerecht';
         $prijs = max(0, round(floatval(str_replace(',', '.', $_POST['prijs'] ?? '0')), 2));
+        if ($categorie !== 'drankje') $prijs = 0;   // gerechten zitten in het arrangement: geen losse prijs
         $allergenen = array_values(array_intersect(array_keys(ALLERGENEN), (array)($_POST['allergenen'] ?? [])));
         $volgorde = intval($_POST['volgorde'] ?? 0);
         $actief = !empty($_POST['actief']) ? 1 : 0;
@@ -129,6 +131,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // ----- E-mail (voor de bon) -----
+    if ($actie === 'mail_opslaan' || $actie === 'mail_test') {
+        $mail = [
+            'smtp_host'          => trim($_POST['smtp_host'] ?? 'smtp.gmail.com'),
+            'smtp_poort'         => (string)max(1, min(65535, intval($_POST['smtp_poort'] ?? 587))),
+            'smtp_beveiliging'   => ($_POST['smtp_beveiliging'] ?? 'tls') === 'ssl' ? 'ssl' : 'tls',
+            'smtp_gebruiker'     => trim($_POST['smtp_gebruiker'] ?? ''),
+            'smtp_controle_uit'  => !empty($_POST['smtp_controle_uit']) ? '1' : '0',
+            'mail_afzender_naam' => mb_substr(trim($_POST['mail_afzender_naam'] ?? 'Las Tapas'), 0, 60) ?: 'Las Tapas',
+        ];
+        // Wachtwoord alleen wijzigen als er iets is ingevuld
+        if (trim($_POST['smtp_wachtwoord'] ?? '') !== '') $mail['smtp_wachtwoord'] = trim($_POST['smtp_wachtwoord']);
+        foreach ($mail as $sleutel => $waarde) {
+            q("INSERT INTO instellingen (sleutel, waarde) VALUES (?, ?) ON DUPLICATE KEY UPDATE waarde = ?", "sss", [$sleutel, $waarde, $waarde]);
+        }
+        instellingen(true);
+
+        if ($actie === 'mail_opslaan') terug('opgeslagen', 'instellingen');
+
+        // Testmail naar het opgegeven adres (of naar het eigen adres)
+        $naar = trim($_POST['test_adres'] ?? '') ?: $mail['smtp_gebruiker'];
+        $html = '<div style="font-family:Segoe UI,Arial,sans-serif;padding:20px;"><h2 style="color:#a8232b;">🍷 Las Tapas</h2>'
+              . '<p>¡Hola! Dit is een testmail. Het versturen van bonnen per e-mail werkt.</p></div>';
+        [$gelukt, $mailMelding] = stuurMail($naar, 'Testmail van Las Tapas', $html, "Las Tapas\n\nDit is een testmail. Het versturen van bonnen per e-mail werkt.");
+        if ($gelukt) $mailOk = "✅ Testmail verstuurd naar $naar. Kijk in de inbox (en eventueel in de map spam).";
+        else $fout = $mailMelding;
+        $mailPoging = true;
+    }
+
     // ----- Instellingen -----
     if ($actie === 'instellingen_opslaan') {
         $nieuw = [
@@ -147,14 +178,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $okTeksten = ['toegevoegd' => 'Toegevoegd.', 'opgeslagen' => 'Opgeslagen.', 'verwijderd' => 'Verwijderd.'];
 $melding = $fout ? ['fout', $fout] : (isset($_GET['ok'], $okTeksten[$_GET['ok']]) ? ['ok', $okTeksten[$_GET['ok']]] : null);
+if (!empty($mailOk)) $melding = ['ok', $mailOk];
 
 $menu = menuItems(false);
 
-$openSectie = in_array($_GET['sectie'] ?? '', ['menu', 'arrangementen', 'instellingen'], true) ? $_GET['sectie'] : 'menu';
+$openSectie = in_array($_GET['sectie'] ?? '', ['menu', 'nieuw', 'arrangementen', 'instellingen'], true) ? $_GET['sectie'] : 'menu';
 $openKies = $_GET['kies'] ?? '';
+if (!empty($mailPoging)) $openSectie = 'instellingen';
 if ($fout) {
     $a = $_POST['actie'] ?? '';
-    if (strpos($a, 'menu_') === 0) { $openSectie = 'menu'; $openKies = $a === 'menu_toevoegen' ? 'nieuw' : ($_POST['id'] ?? ''); }
+    if (strpos($a, 'menu_') === 0) { $openSectie = $a === 'menu_toevoegen' ? 'nieuw' : 'menu'; $openKies = $_POST['id'] ?? ''; }
     if (strpos($a, 'pakket_') === 0) { $openSectie = 'arrangementen'; $openKies = $a === 'pakket_toevoegen' ? 'nieuw' : ($_POST['naam'] ?? ''); }
 }
 $alleInstellingen = instellingen(true);
@@ -163,9 +196,13 @@ $alleInstellingen = instellingen(true);
 function menuFormulier($m, $nieuw = false) {
     $id = $nieuw ? 'nieuw' : $m['id'];
     ob_start(); ?>
-    <div class="item-kaart menu-paneel <?php echo (!$nieuw && !$m['actief']) ? 'inactief' : ''; ?>" id="item-<?php echo esc($id); ?>"
-         data-id="<?php echo esc($id); ?>" data-cat="<?php echo $nieuw ? '*' : esc($m['categorie']); ?>"
-         data-naam="<?php echo esc($nieuw ? '➕ Nieuw gerecht toevoegen' : $m['naam'] . ($m['actief'] ? '' : ' (verborgen)')); ?>" hidden>
+    <?php if ($nieuw): ?>
+    <div class="item-kaart" id="item-nieuw">
+    <?php else: ?>
+    <div class="item-kaart menu-paneel <?php echo !$m['actief'] ? 'inactief' : ''; ?>" id="item-<?php echo esc($id); ?>"
+         data-id="<?php echo esc($id); ?>" data-cat="<?php echo esc($m['categorie']); ?>"
+         data-naam="<?php echo esc($m['naam'] . ($m['actief'] ? '' : ' (verborgen)')); ?>" hidden>
+    <?php endif; ?>
         <form method="POST">
             <?php echo csrfVeld(); ?>
             <input type="hidden" name="actie" value="<?php echo $nieuw ? 'menu_toevoegen' : 'menu_opslaan'; ?>">
@@ -173,14 +210,15 @@ function menuFormulier($m, $nieuw = false) {
             <div class="form-grid">
                 <div><label>Naam</label><input type="text" name="naam" required maxlength="100" value="<?php echo esc($m['naam']); ?>"></div>
                 <div><label>Categorie</label>
-                    <select name="categorie">
+                    <select name="categorie" onchange="toonPrijsVeld(this)">
                         <?php foreach (CATEGORIEEN as $k => $label): ?>
                             <option value="<?php echo $k; ?>" <?php echo $m['categorie'] === $k ? 'selected' : ''; ?>><?php echo esc($label); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="breed"><label>Omschrijving</label><input type="text" name="omschrijving" maxlength="255" value="<?php echo esc($m['omschrijving']); ?>"></div>
-                <div><label>Prijs (€) <small>- alleen voor drankjes bij een arrangement zonder drank</small></label>
+                <div class="prijs-veld" <?php echo $m['categorie'] === 'drankje' ? '' : 'hidden'; ?>>
+                    <label>Prijs (€) <small>- betalen gasten met een arrangement zonder drank</small></label>
                     <input type="number" name="prijs" step="0.01" min="0" value="<?php echo number_format((float)$m['prijs'], 2, '.', ''); ?>"></div>
                 <div><label>Volgorde <small>(lager = hoger in de lijst)</small></label>
                     <input type="number" name="volgorde" value="<?php echo intval($m['volgorde']); ?>"></div>
@@ -245,6 +283,7 @@ include __DIR__ . '/beheer_kop.php';
     <!-- Hoofdtabbladen -->
     <div class="sectie-tabs">
         <button type="button" data-sectie="menu" onclick="toonSectie('menu')">🍽️ Menu</button>
+        <button type="button" data-sectie="nieuw" onclick="toonSectie('nieuw')">➕ Nieuw gerecht</button>
         <button type="button" data-sectie="arrangementen" onclick="toonSectie('arrangementen')">📦 Arrangementen</button>
         <button type="button" data-sectie="instellingen" onclick="toonSectie('instellingen')">⚙️ Instellingen</button>
     </div>
@@ -262,9 +301,30 @@ include __DIR__ . '/beheer_kop.php';
         </div>
         <div id="menu-panelen">
             <?php foreach ($menu as $m) echo menuFormulier($m); ?>
-            <?php echo menuFormulier(['naam' => '', 'omschrijving' => '', 'categorie' => 'hoofdgerecht', 'prijs' => 0, 'allergenen' => [], 'actief' => 1, 'volgorde' => 100], true); ?>
         </div>
         <p class="uitleg">Wijzigingen zijn direct zichtbaar voor klanten. Is iets tijdelijk op? Haal dan het vinkje "Zichtbaar op het menu" weg.</p>
+    </section>
+
+    <!-- ===== NIEUW GERECHT ===== -->
+    <section class="sectie" id="sectie-nieuw" hidden>
+        <p class="uitleg">Vul de gegevens in en kies een categorie. Een prijs vul je alleen in bij drankjes.
+            Na het toevoegen staat het gerecht meteen op het menu (en krijgt het een voorraad van 25).</p>
+        <?php
+            $nieuwGerecht = ['naam' => '', 'omschrijving' => '', 'categorie' => 'voorgerecht', 'prijs' => 0, 'allergenen' => [], 'actief' => 1, 'volgorde' => 100];
+            if ($fout && ($_POST['actie'] ?? '') === 'menu_toevoegen') {
+                // Wat al was ingevuld niet kwijtraken bij een foutmelding
+                $nieuwGerecht = [
+                    'naam' => $_POST['naam'] ?? '',
+                    'omschrijving' => $_POST['omschrijving'] ?? '',
+                    'categorie' => array_key_exists($_POST['categorie'] ?? '', CATEGORIEEN) ? $_POST['categorie'] : 'voorgerecht',
+                    'prijs' => floatval($_POST['prijs'] ?? 0),
+                    'allergenen' => array_values(array_intersect(array_keys(ALLERGENEN), (array)($_POST['allergenen'] ?? []))),
+                    'actief' => !empty($_POST['actief']) ? 1 : 0,
+                    'volgorde' => intval($_POST['volgorde'] ?? 100),
+                ];
+            }
+            echo menuFormulier($nieuwGerecht, true);
+        ?>
     </section>
 
     <!-- ===== ARRANGEMENTEN ===== -->
@@ -356,6 +416,43 @@ include __DIR__ . '/beheer_kop.php';
                 <div class="item-knoppen"><button type="submit">Instellingen opslaan</button></div>
             </form>
         </div>
+        <div class="item-kaart">
+            <form method="POST">
+                <?php echo csrfVeld(); ?>
+                <h3 style="margin-top: 0;">📧 E-mail voor de bon</h3>
+                <p class="uitleg">Gasten kunnen hun bon per e-mail krijgen. Daarvoor is een e-mailaccount nodig dat mag versturen.
+                    <strong>Gmail:</strong> zet tweestapsverificatie aan in je Google-account, maak een <strong>app-wachtwoord</strong> aan
+                    (Google-account → Beveiliging → App-wachtwoorden) en vul dat hieronder in, niet je gewone wachtwoord.</p>
+                <div class="form-grid">
+                    <div><label>E-mailadres (afzender)</label>
+                        <input type="text" name="smtp_gebruiker" placeholder="bijv. lastapas.bonnen@gmail.com" value="<?php echo esc($alleInstellingen['smtp_gebruiker'] ?? ''); ?>"></div>
+                    <div><label>App-wachtwoord <small>(leeg laten om niet te wijzigen)</small></label>
+                        <input type="password" name="smtp_wachtwoord" autocomplete="new-password"
+                               placeholder="<?php echo ($alleInstellingen['smtp_wachtwoord'] ?? '') !== '' ? '•••••••• (ingesteld)' : 'nog niet ingesteld'; ?>"></div>
+                    <div><label>Naam afzender</label>
+                        <input type="text" name="mail_afzender_naam" value="<?php echo esc($alleInstellingen['mail_afzender_naam'] ?? 'Las Tapas'); ?>"></div>
+                    <div><label>Mailserver</label>
+                        <input type="text" name="smtp_host" value="<?php echo esc($alleInstellingen['smtp_host'] ?? 'smtp.gmail.com'); ?>"></div>
+                    <div><label>Poort</label>
+                        <input type="number" name="smtp_poort" value="<?php echo esc($alleInstellingen['smtp_poort'] ?? 587); ?>"></div>
+                    <div><label>Beveiliging</label>
+                        <select name="smtp_beveiliging">
+                            <option value="tls" <?php echo ($alleInstellingen['smtp_beveiliging'] ?? 'tls') === 'tls' ? 'selected' : ''; ?>>TLS (poort 587)</option>
+                            <option value="ssl" <?php echo ($alleInstellingen['smtp_beveiliging'] ?? '') === 'ssl' ? 'selected' : ''; ?>>SSL (poort 465)</option>
+                        </select></div>
+                </div>
+                <label class="vinkje actief-vinkje"><input type="checkbox" name="smtp_controle_uit" value="1" <?php echo ($alleInstellingen['smtp_controle_uit'] ?? '0') === '1' ? 'checked' : ''; ?>>
+                    Certificaat niet controleren <small style="font-weight: normal;">(alleen aanzetten als de testmail op WampServer anders mislukt)</small></label>
+                <div class="form-grid" style="margin-top: 12px;">
+                    <div><label>Testmail sturen naar <small>(leeg = naar het afzenderadres)</small></label>
+                        <input type="text" name="test_adres" placeholder="jouw@email.nl"></div>
+                </div>
+                <div class="item-knoppen">
+                    <button type="submit" name="actie" value="mail_opslaan">Opslaan</button>
+                    <button type="submit" name="actie" value="mail_test" style="background: #1f4e8c;">Opslaan & testmail sturen</button>
+                </div>
+            </form>
+        </div>
     </section>
 
 </div>
@@ -380,8 +477,10 @@ include __DIR__ . '/beheer_kop.php';
         document.querySelectorAll('.menu-paneel').forEach(p => {
             if (p.dataset.cat === cat) select.add(new Option(p.dataset.naam, p.dataset.id));
         });
-        select.add(new Option('➕ Nieuw gerecht toevoegen', 'nieuw'));
 
+        if (select.options.length === 0) {
+            select.add(new Option('(nog geen gerechten in deze categorie)', ''));
+        }
         const bestaat = [...select.options].some(o => o.value === kiesId);
         select.value = bestaat ? kiesId : select.options[0].value;
         toonGerecht(select.value);
@@ -389,11 +488,12 @@ include __DIR__ . '/beheer_kop.php';
 
     function toonGerecht(id) {
         document.querySelectorAll('.menu-paneel').forEach(p => p.hidden = p.dataset.id !== id);
-        // Nieuw gerecht: categorie alvast op de gekozen categorie zetten
-        if (id === 'nieuw') {
-            const catSelect = document.querySelector('#item-nieuw select[name="categorie"]');
-            if (catSelect) catSelect.value = huidigeCategorie;
-        }
+    }
+
+    // Prijs alleen tonen als de categorie "Drankjes" is
+    function toonPrijsVeld(select) {
+        const veld = select.closest('form').querySelector('.prijs-veld');
+        if (veld) veld.hidden = select.value !== 'drankje';
     }
 
     function toonPakket(id) {
@@ -405,7 +505,7 @@ include __DIR__ . '/beheer_kop.php';
     let startCat = 'voorgerecht';
     if (START.sectie === 'menu' && START.kies) {
         const paneel = document.querySelector(`.menu-paneel[data-id="${CSS.escape(START.kies)}"]`);
-        if (paneel && paneel.dataset.cat !== '*') startCat = paneel.dataset.cat;
+        if (paneel) startCat = paneel.dataset.cat;
     }
     toonCategorie(startCat, START.sectie === 'menu' ? START.kies : '');
 

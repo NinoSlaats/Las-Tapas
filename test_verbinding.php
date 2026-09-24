@@ -2,7 +2,6 @@
 // Las Tapas - Verbindingstest
 // Open deze pagina op je telefoon: http://JOUW-PC-IP/lastapas/test_verbinding.php
 ini_set('display_errors', '0');
-mysqli_report(MYSQLI_REPORT_OFF);
 
 $resultaten = [];
 
@@ -10,7 +9,12 @@ $resultaten = [];
 $resultaten[] = ['PHP draait op de server', true, 'PHP versie ' . PHP_VERSION];
 
 // 2. Databaseverbinding
-$conn = @new mysqli('localhost', 'root', '', 'las_tapas_db');
+require_once __DIR__ . '/gedeeld.php';
+try {
+    $conn = db();   // gedeelde verbinding (maakt ontbrekende tabellen ook meteen aan)
+} catch (Throwable $e) {
+    $conn = new class($e->getMessage()) { public $connect_error; function __construct($m) { $this->connect_error = $m; } };
+}
 $dbOk = !$conn->connect_error;
 $resultaten[] = ['Verbinding met database las_tapas_db', $dbOk, $dbOk ? 'Gelukt' : $conn->connect_error];
 
