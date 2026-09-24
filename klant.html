@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Las Tapas - Sabores de España</title>
+    <!-- Warm serif-lettertype voor de koppen (zoals op een Spaanse menukaart) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --rood: #a8232b;        /* flamencorood */
+            --geel: #e9a23b;        /* saffraan */
+            --creme: #fbf5ea;       /* gekalkte muur */
+            --inkt: #2b1d19;
+            --grijs: #7a6b63;
+            --azul: #1f4e8c;        /* kobaltblauw van de azulejos */
+            --terracota: #c0562f;
+            --oliva: #5f6f2f;
+            --kopfont: 'Fraunces', 'Georgia', serif;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--creme);
+            color: var(--inkt);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--rood);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 5px solid var(--geel);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        header h1 { margin: 0; font-size: 2rem; font-family: 'Georgia', serif; }
+
+        .header-rechts {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .tafel-badge {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            border: 1px solid var(--geel);
+        }
+
+        .betaal-knop {
+            background-color: #2a9d8f;
+            color: white;
+            border: 1px solid #21867a;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .betaal-knop:hover {
+            background-color: #21867a;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(43, 29, 25, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+            border-top: 6px solid var(--rood);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 { color: var(--rood); font-family: 'Georgia', serif; margin-top: 0; }
+        
+        .input-groep {
+            margin: 12px 0;
+            text-align: left;
+        }
+
+        .input-groep label {
+            display: block;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .input-veld {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0ccb8;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            background: #fff8f0;
+        }
+
+        .aantal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pakket-optie {
+            background: #fff8f0;
+            border: 2px solid #f2e3d3;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            cursor: pointer;
+            text-align: left;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .pakket-optie:hover {
+            background: #fff3e6;
+            border-color: var(--geel);
+        }
+
+        .pakket-optie h3 { margin: 0 0 4px 0; color: var(--rood); font-size: 1rem; font-family: 'Georgia', serif; }
+        .pakket-optie p { margin: 0; font-size: 0.8rem; color: var(--grijs); }
+        .pakket-prijs-info { font-size: 0.8rem; font-weight: bold; color: var(--inkt); margin-top: 6px; display: block; }
+
+        .betaal-optie-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .betaal-keuze-btn {
+            background: #fff8f0;
+            border: 2px solid #e0ccb8;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--inkt);
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .betaal-keuze-btn:hover {
+            border-color: var(--rood);
+            background: #fff3e6;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 25px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 25px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: #f2e3d3;
+            border: 1px solid #e0ccb8;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--grijs);
+            font-size: 0.95rem;
+        }
+
+        .tab-btn.active {
+            background: var(--rood);
+            color: white;
+            border-color: var(--rood);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .menu-sectie h2, .status-sectie h2 { 
+            font-family: 'Georgia', serif; 
+            color: var(--rood); 
+            margin-top: 0; 
+            border-bottom: 2px solid var(--geel);
+            padding-bottom: 6px;
+            display: inline-block;
+            font-size: 1.5rem;
+        }
+        
+        .categorie-balk {
+            display: flex;
+            gap: 10px;
+            margin: 12px 0 22px 0;
+            flex-wrap: wrap;
+        }
+
+        .cat-btn {
+            background-color: #f2e3d3;
+            border: 1px solid #e0ccb8;
+            padding: 9px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--grijs);
+        }
+
+        .cat-btn.active, .cat-btn:hover {
+            background-color: var(--rood);
+            color: white;
+            border-color: var(--rood);
+        }
+
+        .menuraster {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 15px;
+        }
+
+        .product-kaart {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #ebdcd0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .product-info h3 { margin: 0 0 6px 0; font-size: 1.1rem; color: var(--inkt); font-family: 'Georgia', serif; }
+        .product-info p { margin: 0 0 8px 0; color: var(--grijs); font-size: 0.85rem; line-height: 1.35; }
+        
+        .product-onder {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-top: 1px solid #f7f1eb;
+            padding-top: 10px;
+        }
+
+        .knop-toevoegen {
+            background-color: var(--geel);
+            color: var(--inkt);
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .knop-toevoegen:hover { background-color: #e79043; color: white; }
+
+        .bestelling-kaart {
+            background: white;
+            border: 1px solid #ebdcd0;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .mandje {
+            background: white;
+            border-radius: 10px;
+            padding: 22px;
+            border-top: 6px solid var(--rood);
+            border: 1px solid #ebdcd0;
+            position: sticky;
+            top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .mandje h3 { margin-top: 0; font-family: 'Georgia', serif; color: var(--rood); font-size: 1.2rem; }
+        
+        .mand-regels { 
+            max-height: 260px; 
+            overflow-y: auto; 
+            margin-bottom: 15px; 
+            border-bottom: 1px solid #f2e3d3; 
+            padding-bottom: 10px; 
+        }
+
+        .mand-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            background: #fff8f0;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #f7f0e6;
+        }
+
+        .mand-item button {
+            background: #f2e3d3;
+            border: 1px solid #e0ccb8;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 2px 7px;
+            font-weight: bold;
+        }
+        .mand-item button:hover { background: var(--rood); color: white; border-color: var(--rood); }
+
+        .bestel-knop {
+            width: 100%;
+            background-color: #2a9d8f;
+            color: white;
+            border: none;
+            padding: 13px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .bestel-knop:hover { background-color: #21867a; }
+        .bestel-knop:disabled { background-color: #d8d8d8; cursor: not-allowed; }
+        #melding { margin-top: 12px; text-align: center; font-weight: bold; font-size: 0.85rem; }
+
+        /* Stappen bij contant betalen */
+        .betaal-stappen { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 15px 0 5px 0; flex-wrap: wrap; }
+        .betaal-stap { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.8rem; color: #b9aba3; font-weight: bold; min-width: 110px; }
+        .stap-bol { width: 30px; height: 30px; border-radius: 50%; background: #eee3d8; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: background 0.3s; }
+        .betaal-stap.actief { color: var(--inkt); }
+        .betaal-stap.actief .stap-bol { background: #2a9d8f; }
+        .betaal-stap.bezig .stap-bol { background: var(--geel); animation: stapPuls 1.4s infinite; }
+        .stap-lijn { width: 40px; height: 3px; background: #eee3d8; border-radius: 2px; }
+        .stap-lijn.actief { background: #2a9d8f; }
+        @keyframes stapPuls { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+        /* ===== Responsive: tablet ===== */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .mandje {
+                position: static;
+            }
+            .container > div:first-child { margin-bottom: 20px; }
+        }
+
+        /* Allergenen, opmerking en ronde */
+        .allergie-info { font-size: 0.8rem; color: var(--grijs); margin: 4px 0 0 0; }
+        .allergenen { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px 0 !important; }
+        .allergeen { background: #fff3e6; border: 1px solid #f2e3d3; border-radius: 10px; padding: 1px 7px; font-size: 0.7rem; color: var(--inkt); white-space: nowrap; }
+        .opmerking-label { display: block; font-size: 0.8rem; font-weight: bold; color: var(--grijs); margin-bottom: 4px; }
+        .opmerking-veld { width: 100%; box-sizing: border-box; border: 1px solid #e0ccb8; border-radius: 6px; padding: 8px; font-family: inherit; font-size: 0.9rem; background: #fff8f0; resize: vertical; margin-bottom: 12px; }
+        .ronde-info { background: #eef7f6; border: 1px solid #cfe8e4; color: #1d6f66; border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; margin-bottom: 12px; }
+        .ronde-info.vol { background: #fdecea; border-color: #f5c6c0; color: #922b21; }
+        .ongeldig-code { position: fixed; inset: 0; z-index: 2000; background: var(--creme); display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .ongeldig-code div { max-width: 420px; }
+        .ongeldig-code h2 { color: var(--rood); font-family: 'Georgia', serif; }
+
+        /* Serveerster roepen */
+        .hulp-knop {
+            background: #fff3e6; color: var(--rood); border: 1px solid var(--geel);
+            padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; font-family: inherit;
+        }
+        .hulp-knop:hover { background: white; }
+        .hulp-knop.actief { background: var(--geel); color: var(--inkt); }
+        .knop-kort { display: none; }
+        .reden-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; }
+        .reden-knop {
+            background: #fff8f0; border: 2px solid #e0ccb8; border-radius: 10px; padding: 12px 8px;
+            font-weight: bold; font-size: 0.85rem; color: var(--inkt); cursor: pointer; font-family: inherit;
+        }
+        .reden-knop.gekozen { border-color: var(--rood); background: #fff3e6; }
+        .oproep-balk {
+            display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+            background: #fff8e1; border-bottom: 1px solid #f5d98b; padding: 10px 16px; font-size: 0.9rem; text-align: center;
+        }
+        .oproep-balk.geaccepteerd { background: #eafaf1; border-bottom-color: #abebc6; }
+        .oproep-balk button {
+            background: white; border: 1px solid #e0ccb8; border-radius: 16px; padding: 5px 12px;
+            font-weight: bold; font-size: 0.8rem; color: var(--grijs); cursor: pointer; font-family: inherit;
+        }
+        .wacht-puntjes::after { content: ''; animation: puntjes 1.5s steps(4, end) infinite; }
+        @keyframes puntjes { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+        .welkom-melding { background: #eef4fb; border: 1px solid #c9dcf1; color: #1f4e8c; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; text-align: left; }
+
+        /* Bon bij het afrekenen */
+        .bon-keuze { background: #fffdf8; border: 1px dashed #e0ccb8; border-radius: 10px; padding: 10px 12px; margin: 0 0 12px 0; text-align: left; }
+        .bon-titel { font-weight: bold; margin: 0 0 8px 0; font-size: 0.9rem; }
+        .bon-opties { display: flex; gap: 6px; flex-wrap: wrap; }
+        .bon-optie {
+            flex: 1; min-width: 90px; background: white; border: 2px solid #e0ccb8; border-radius: 8px; padding: 8px 6px;
+            font-weight: bold; font-size: 0.8rem; color: var(--inkt); cursor: pointer; font-family: inherit;
+        }
+        .bon-optie.gekozen { border-color: var(--azul); background: #eef4fb; color: var(--azul); }
+        .bon-email { width: 100%; box-sizing: border-box; margin-top: 8px; padding: 10px; border: 1px solid #e0ccb8; border-radius: 6px; font-size: 16px; font-family: inherit; }
+        .bon-email.fout { border-color: var(--rood); background: #fdecea; }
+        .bon-uitleg { margin: 6px 0 0 0; font-size: 0.8rem; color: var(--grijs); min-height: 0; }
+        .bon-uitleg.fout { color: var(--rood); font-weight: bold; }
+
+        /* Beoordeling */
+        .sterren { display: flex; justify-content: center; gap: 6px; margin: 10px 0 4px 0; }
+        .sterren button {
+            background: none; border: none; font-size: 2.6rem; line-height: 1; color: #e3d6c6;
+            cursor: pointer; padding: 2px; transition: transform 0.1s, color 0.1s;
+        }
+        .sterren button.aan { color: var(--geel); }
+        .sterren button:active { transform: scale(1.2); }
+        .sterren-tekst { font-weight: bold; color: var(--grijs); margin: 0 0 15px 0; min-height: 1.2em; }
+
+        /* Rekening in het betaalscherm */
+        .rekening { background: #fff8f0; border: 1px solid #f2e3d3; border-radius: 10px; padding: 12px 14px; margin: 12px 0; text-align: left; }
+        .rekening:empty { display: none; }
+        .rekening-regel { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9rem; padding: 3px 0; }
+        .rekening-totaal { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; border-top: 1px solid #e0ccb8; margin-top: 6px; padding-top: 8px; }
+
+        /* Balk met eindtijd */
+        .tijd-balk {
+            display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+            background: #fff3e6; color: var(--inkt); border-bottom: 1px solid #f2e3d3;
+            padding: 9px 16px; font-size: 0.9rem; text-align: center;
+        }
+        .tijd-balk button {
+            background: white; border: 1px solid #e0ccb8; border-radius: 16px; padding: 5px 12px;
+            font-weight: bold; font-size: 0.8rem; color: var(--rood); cursor: pointer;
+        }
+        .tijd-balk.op { background: #fdecea; }
+
+        /* Drankprijs (alleen bij arrangement zonder drank) */
+        .drank-prijs { color: var(--rood) !important; font-weight: bold; font-size: 0.8rem !important; margin: 0 0 6px 0 !important; }
+        .mand-extra { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--rood); margin-bottom: 10px; }
+
+        .verleng-knoppen { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .verleng-secundair { background: #f2e3d3; border: 1px solid #e0ccb8; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; color: var(--grijs); }
+
+        /* ================= SPAANSE SFEER ================= */
+        body {
+            background-color: var(--creme);
+            background-image: radial-gradient(circle at 20% 0%, rgba(233, 162, 59, 0.10), transparent 45%),
+                              radial-gradient(circle at 90% 30%, rgba(192, 86, 47, 0.07), transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* Kop: rood met een vage tegelprint, en een echte rij azulejos eronder */
+        header {
+            position: relative;
+            background-color: var(--rood);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 28 28'%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%23ffffff' opacity='.07'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%23ffffff' opacity='.05'/%3E%3C/svg%3E"), linear-gradient(135deg, #b52a31, #8e1c23);
+            border-bottom: none;
+            margin-bottom: 14px;
+        }
+        header::after {
+            content: ''; position: absolute; left: 0; right: 0; bottom: -14px; height: 14px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 14px 14px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+        header h1 { font-family: var(--kopfont); font-weight: 800; letter-spacing: 0.5px; }
+        header h1 .ondertitel { display: block; font-family: 'Segoe UI', sans-serif; font-size: 0.7rem; font-weight: normal; letter-spacing: 3px; text-transform: uppercase; opacity: 0.85; }
+        .tafel-badge { border-color: rgba(233, 162, 59, 0.8); }
+
+        /* Koppen */
+        .modal-content h2, .menu-sectie h2, .status-sectie h2, .mandje h3 { font-family: var(--kopfont); font-weight: 800; }
+        .menu-sectie h2, .status-sectie h2 { color: var(--rood); border-bottom: none; position: relative; }
+        .menu-sectie h2::after, .status-sectie h2::after {
+            content: ''; display: block; width: 70px; height: 7px; margin-top: 6px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 7px 7px; border-radius: 2px;
+        }
+        .kop-ondertitel { display: block; font-family: 'Segoe UI', sans-serif; font-size: 0.8rem; font-weight: normal; color: var(--grijs); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+        /* Tabs en categorieknoppen */
+        .tab-btn.active { background: var(--rood); }
+        .cat-btn { border-color: #e6d3bd; }
+        .cat-btn.active, .cat-btn:hover { background: var(--azul); border-color: var(--azul); color: white; }
+        .cat-btn small { font-weight: normal; opacity: 0.75; margin-left: 3px; }
+
+        /* Gerechten als tegeltjes */
+        .product-kaart { border-color: #ecdcc8; border-top: 4px solid var(--terracota); }
+        .product-kaart:hover { border-top-color: var(--azul); }
+        .product-info h3 { font-family: var(--kopfont); font-weight: 600; color: var(--inkt); }
+        .knop-toevoegen {
+            background: linear-gradient(145deg, var(--geel), var(--terracota));
+            color: white; border: none; box-shadow: 0 2px 5px rgba(192, 86, 47, 0.35);
+        }
+        .knop-toevoegen:hover { background: linear-gradient(145deg, var(--terracota), var(--rood)); }
+        .knop-toevoegen:disabled { background: #d8d0c8; box-shadow: none; }
+        .cat-kop { font-family: var(--kopfont); font-weight: 800; }
+        .cat-kop small { font-family: 'Segoe UI', sans-serif; font-weight: normal; color: var(--grijs); margin-left: 4px; }
+
+        /* Mandje */
+        .mandje { border-top: none; position: relative; overflow: hidden; }
+        .mandje::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 10px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 10px 10px;
+        }
+        .bestel-knop { background: var(--oliva); }
+        .bestel-knop:hover { background: #4d5a24; }
+
+        /* Pop-ups met een tegelrand bovenaan */
+        .modal-content { border-top: none; position: relative; padding-top: 40px; }
+        .modal-content::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 14px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 14px 14px;
+        }
+        .pakket-optie h3 { font-family: var(--kopfont); }
+        .pakket-optie:hover, .pakket-optie.selected { border-color: var(--azul); }
+
+        /* Voettekst */
+        .voet { position: relative; margin-top: 40px; padding: 30px 16px 30px; text-align: center; color: var(--grijs); font-size: 0.85rem; }
+        .voet::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 10px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23fdf6e3'/%3E%3Cpath d='M14 3C17 9 19 11 25 14C19 17 17 19 14 25C11 19 9 17 3 14C9 11 11 9 14 3Z' fill='%231f4e8c'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23e9a23b'/%3E%3Cpath d='M0 0h5v5H0zM23 0h5v5h-5zM0 23h5v5H0zM23 23h5v5h-5z' fill='%231f4e8c' opacity='.5'/%3E%3C/svg%3E") repeat-x; background-size: 10px 10px;
+        }
+        .voet strong { font-family: var(--kopfont); color: var(--rood); font-size: 1.1rem; display: block; margin-bottom: 4px; }
+
+        /* Elementen die alleen op de telefoon zichtbaar zijn */
+        .cat-kop, .mand-balk, .mand-achtergrond, .mand-sheet-kop, .in-mand { display: none; }
+        .knop-toevoegen { position: relative; }
+
+        /* ===== Telefoon ===== */
+        @media (max-width: 700px) {
+            body { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+
+            /* Compacte kop */
+            header { flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-bottom-width: 4px; }
+            header > div:first-child { min-width: 0; flex: 1; }
+            header h1 { font-size: 1.3rem; }
+            #gekozen-pakket-label { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; }
+            .header-rechts { gap: 8px; }
+            .tafel-badge { padding: 6px 12px; font-size: 0.8rem; }
+            .betaal-knop { padding: 8px 12px; font-size: 0.8rem; }
+            .hulp-knop { padding: 8px 12px; font-size: 0.8rem; }
+            .knop-lang { display: none; }
+            .knop-kort { display: inline; }
+            .reden-grid { grid-template-columns: 1fr; }
+
+            html, body { overflow-x: clip; }
+            .container { grid-template-columns: minmax(0, 1fr); padding: 0 12px; margin: 12px auto; gap: 0; }
+            .container > div { min-width: 0; }
+            header h1 { white-space: nowrap; }
+            header h1 .ondertitel { display: none; }
+        }
+        @media (max-width: 480px) {
+            header > div:first-child { flex-basis: 100%; }
+            .header-rechts { width: 100%; justify-content: space-between; }
+            .modal-content { padding-top: 34px !important; }
+            .mandje::before { display: none; }
+
+            /* Tabs Menu / Mijn bestellingen */
+            .nav-tabs { gap: 8px; margin-bottom: 12px; }
+            .tab-btn { flex: 1; text-align: center; padding: 11px 6px; font-size: 0.85rem; }
+
+            .menu-sectie h2, .status-sectie h2 { font-size: 1.25rem; }
+            .tab-extra { display: none; }
+
+            /* Categorieknoppen: horizontaal swipen en bovenin blijven staan */
+            .categorie-balk {
+                position: sticky; top: 0; z-index: 50;
+                background: var(--creme);
+                margin: 8px -12px 12px -12px; padding: 10px 12px;
+                flex-wrap: nowrap; overflow-x: auto;
+                scrollbar-width: none; -webkit-overflow-scrolling: touch;
+                box-shadow: 0 6px 8px -8px rgba(0,0,0,0.25);
+            }
+            .categorie-balk::-webkit-scrollbar { display: none; }
+            .cat-btn { flex-shrink: 0; padding: 9px 14px; }
+
+            /* Menu als lijst in plaats van losse kaarten */
+            .menuraster {
+                grid-template-columns: 1fr; gap: 0;
+                background: white; border: 1px solid #ebdcd0; border-radius: 12px; overflow: hidden;
+            }
+            .cat-kop {
+                display: block; margin: 0; padding: 9px 14px;
+                background: #fbf1e6; color: var(--rood);
+                font-size: 0.85rem; font-weight: bold;
+                border-bottom: 1px solid #f2e3d3;
+            }
+            .product-kaart {
+                flex-direction: row; align-items: center; gap: 12px;
+                border: none; border-bottom: 1px solid #f4ebe2; border-radius: 0;
+                box-shadow: none; padding: 13px 14px;
+            }
+            .product-kaart:last-child { border-bottom: none; }
+            .product-info { flex: 1; min-width: 0; }
+            .product-info h3 { font-size: 1rem; margin-bottom: 3px; }
+            .product-info p { font-size: 0.8rem; margin-bottom: 0; }
+            .product-info p + p { margin-top: 4px; }
+            .product-onder { border-top: none; padding-top: 0; }
+            .knop-toevoegen { width: 44px; height: 44px; font-size: 1.4rem; flex-shrink: 0; }
+            .in-mand {
+                display: flex; position: absolute; top: -6px; right: -6px;
+                min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box;
+                align-items: center; justify-content: center;
+                background: var(--rood); color: white; border-radius: 10px;
+                font-size: 0.7rem; border: 2px solid white;
+            }
+
+            /* Mandje: schuift van onderen in beeld */
+            .mandje {
+                position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 960;
+                margin: 0; border: none; border-radius: 18px 18px 0 0;
+                max-height: 82vh; overflow-y: auto;
+                padding: 8px 18px calc(18px + env(safe-area-inset-bottom, 0px)) 18px;
+                box-shadow: 0 -8px 30px rgba(0,0,0,0.2);
+                transform: translateY(105%); transition: transform 0.28s ease;
+            }
+            .mandje.open { transform: translateY(0); }
+            .mand-sheet-kop { display: flex; justify-content: center; position: relative; padding: 6px 0 10px 0; }
+            .mand-greep { width: 42px; height: 5px; border-radius: 3px; background: #e0ccb8; }
+            .mand-sluit {
+                position: absolute; right: -6px; top: -2px; width: 40px; height: 40px;
+                border: none; background: transparent; font-size: 1.2rem; color: var(--grijs); cursor: pointer;
+            }
+            .mand-regels { max-height: none; }
+            .mand-item { padding: 10px; }
+            .mand-item button { width: 38px; height: 38px; font-size: 1.1rem; padding: 0; }
+            .bestel-knop { padding: 15px; font-size: 1rem; }
+
+            .mand-achtergrond {
+                display: block; position: fixed; inset: 0; z-index: 955;
+                background: rgba(43, 29, 25, 0.5);
+                opacity: 0; pointer-events: none; transition: opacity 0.25s;
+            }
+            .mand-achtergrond.open { opacity: 1; pointer-events: auto; }
+
+            /* Vaste balk onderin met het aantal gekozen items */
+            .mand-balk {
+                display: flex; align-items: center; gap: 12px;
+                position: fixed; left: 12px; right: 12px; z-index: 900;
+                bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+                padding: 12px 16px; border: none; border-radius: 14px;
+                background: #2a9d8f; color: white; font-size: 0.95rem; font-weight: bold;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.25); cursor: pointer; text-align: left;
+                font-family: inherit;
+            }
+            .mand-balk.leeg { background: #7a6b63; }
+            .mand-balk-aantal {
+                min-width: 28px; height: 28px; border-radius: 14px; padding: 0 6px; box-sizing: border-box;
+                background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center;
+            }
+            .mand-balk-tekst { flex: 1; }
+            .mand-balk-actie { font-size: 0.85rem; opacity: 0.9; }
+            .mand-balk.bump { animation: balkBump 0.3s ease; }
+            @keyframes balkBump { 50% { transform: scale(1.03); } }
+
+            /* Pop-ups als onderblad, zoals in een app */
+            .modal-overlay { align-items: flex-end; padding: 0; }
+            .modal-content {
+                border-radius: 18px 18px 0 0; max-width: 100%; max-height: 92vh;
+                padding: 22px 18px calc(22px + env(safe-area-inset-bottom, 0px)) 18px;
+                box-sizing: border-box;
+            }
+            .aantal-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .aantal-grid .input-groep label { font-size: 0.75rem; min-height: 2.2em; }
+            .betaal-optie-grid { grid-template-columns: 1fr; gap: 10px; }
+            .betaal-keuze-btn { flex-direction: row; justify-content: center; padding: 16px; }
+
+            /* Voorkomt dat iOS automatisch inzoomt bij het aanklikken van invoervelden */
+            input, select, .input-veld { font-size: 16px; }
+        }
+
+        @media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+            .mandje, .mand-achtergrond { transition: none; }
+            .mand-balk.bump, .betaal-stap.bezig .stap-bol { animation: none; }
+        }
+    </style>
+    <script src="taal.js" defer></script>
+</head>
+<body>
+
+    <!-- Welkomst Modal -->
+    <div id="sessie-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>¡Bienvenidos a Las Tapas!</h2>
+            <p style="color: var(--grijs); font-size: 0.9rem;">Vul je gegevens in om het menu te bekijken:</p>
+            
+            <div class="input-groep">
+                <label for="input-gast-naam">Jouw naam (Hoofdboeker):</label>
+                <input type="text" id="input-gast-naam" class="input-veld" placeholder="Bijv. Jan de Vries">
+            </div>
+
+            <div class="aantal-grid">
+                <div class="input-groep">
+                    <label for="input-volwassenen">Volwassenen:</label>
+                    <input type="number" id="input-volwassenen" class="input-veld" value="2" min="1" max="20">
+                </div>
+                <div class="input-groep">
+                    <label for="input-senioren">Senioren (65+):</label>
+                    <input type="number" id="input-senioren" class="input-veld" value="0" min="0" max="20">
+                </div>
+                <div class="input-groep">
+                    <label for="input-kinderen">Kinderen:</label>
+                    <input type="number" id="input-kinderen" class="input-veld" value="0" min="0" max="20">
+                </div>
+            </div>
+
+            <p style="margin-top: 15px; font-weight: bold; text-align: left; color: var(--rood);">Kies jullie arrangement:</p>
+            
+            <div id="pakket-opties"><p style="color: var(--grijs); font-style: italic;">Arrangementen laden...</p></div>
+
+            <p id="welkom-melding" class="welkom-melding" style="display: none;">ℹ️ Jullie vorige bezoek aan deze tafel is afgesloten. Welkom! Vul jullie gegevens opnieuw in.</p>
+            <p id="modal-fout" style="color: var(--rood); font-weight: bold; font-size: 0.85rem; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <!-- Betaalmethode Modal -->
+    <div id="betaal-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>La Cuenta <span class="kop-ondertitel">Kies je betaalmethode</span></h2>
+            <div id="rekening-overzicht" class="rekening"></div>
+            <div class="bon-keuze">
+                <p class="bon-titel">🧾 Wil je een bon?</p>
+                <div class="bon-opties">
+                    <button type="button" class="bon-optie gekozen" data-bon="geen" onclick="kiesBon('geen')">Geen bon</button>
+                    <button type="button" class="bon-optie" data-bon="email" onclick="kiesBon('email')">📧 Per e-mail</button>
+                    <button type="button" class="bon-optie" data-bon="papier" onclick="kiesBon('papier')">🧾 Op papier</button>
+                </div>
+                <input type="email" id="bon-email" class="bon-email" placeholder="jouw@email.nl" autocomplete="email" hidden>
+                <p id="bon-uitleg" class="bon-uitleg"></p>
+            </div>
+            <p style="color: var(--grijs); font-size: 0.9rem;">Hoe willen jullie de rekening voldoen?</p>
+            
+            <div class="betaal-optie-grid">
+                <button class="betaal-keuze-btn" onclick="kiesBetaalMethode('online')">
+                    <span style="font-size: 2rem;">📱</span>
+                    <span>Online betalen</span>
+                </button>
+                <button class="betaal-keuze-btn" onclick="kiesBetaalMethode('contant')">
+                    <span style="font-size: 2rem;">💶</span>
+                    <span>Contant betalen</span>
+                </button>
+            </div>
+            
+            <button onclick="sluitBetaalModal()" style="background: #f2e3d3; border: 1px solid #e0ccb8; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; color: var(--grijs); margin-top: 10px;">Terug naar het menu</button>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qr-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Scan om te betalen</h2>
+            <p style="color: var(--grijs); font-size: 0.9rem;">Scan deze QR-code met je telefoon om de betaling af te ronden:</p>
+            
+            <div style="margin: 20px 0; display: flex; justify-content: center;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://example.com/betaal" alt="Betaal QR Code" style="border: 4px solid var(--creme); border-radius: 8px;">
+            </div>
+            
+            <p id="qr-bedrag" style="font-weight: bold; font-size: 1.1rem; margin: 0 0 8px 0;"></p>
+            <p style="font-size: 0.85rem; color: var(--grijs); margin-bottom: 20px;">Tik na het betalen op de knop hieronder. Een serveerster komt daarna even controleren of de betaling gelukt is.</p>
+            
+            <button class="bestel-knop" onclick="bevestigOnlineBetaling()">Ik heb betaald</button>
+            <button onclick="document.getElementById('qr-modal').style.display='none'" style="background: none; border: none; color: var(--grijs); margin-top: 12px; cursor: pointer; font-weight: bold;">Terug</button>
+        </div>
+    </div>
+
+    <!-- Contant Melding Modal (op slot: geen knoppen, sluit pas na bevestiging serveerster) -->
+    <div id="contant-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="betaal-slot-titel">Contant betalen</h2>
+            <div class="betaal-stappen">
+                <div class="betaal-stap" id="stap-verstuurd"><span class="stap-bol">1</span><span>Verzoek ontvangen</span></div>
+                <div class="stap-lijn"></div>
+                <div class="betaal-stap" id="stap-geaccepteerd"><span class="stap-bol">2</span><span>Serveerster onderweg</span></div>
+            </div>
+            <p id="bon-slot-info" class="bon-uitleg" style="display: none; margin-top: 10px;"></p>
+            <p id="contant-modal-tekst" style="font-size: 1.05rem; color: var(--inkt); margin: 20px 0; line-height: 1.5;"></p>
+            <p style="font-size: 0.85rem; color: var(--grijs);">⏳ Een moment geduld. Dit scherm sluit automatisch zodra de betaling is afgerond.</p>
+        </div>
+    </div>
+
+    <!-- Tafel is al in gebruik: aansluiten bij het gezelschap -->
+    <div id="aansluit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>¡Hola! <span class="kop-ondertitel">Deze tafel is al in gebruik</span></h2>
+            <p id="aansluit-tekst" style="line-height: 1.5;"></p>
+            <p style="font-weight: bold;">Hoor je bij dit gezelschap?</p>
+            <button class="bestel-knop" id="aansluit-knop" onclick="sluitAan()">✅ Ja, aansluiten</button>
+            <button class="verleng-secundair" style="width: 100%; margin-top: 8px;" onclick="nietMijnTafel()">Nee, dit is niet mijn tafel</button>
+            <p id="aansluit-melding" style="font-size: 0.9rem; color: var(--grijs); margin-top: 12px;"></p>
+        </div>
+    </div>
+
+    <!-- Beoordeling na het betalen -->
+    <div id="review-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div id="review-vragen">
+                <h2>¿Qué tal? <span class="kop-ondertitel">Hoe was het bij Las Tapas?</span></h2>
+                <p style="color: var(--grijs);">Bedankt voor jullie bezoek! Laat je weten hoe je het vond?</p>
+                <div class="sterren" id="sterren">
+                    <button type="button" data-ster="1" onclick="kiesSterren(1)" aria-label="1 ster">★</button>
+                    <button type="button" data-ster="2" onclick="kiesSterren(2)" aria-label="2 sterren">★</button>
+                    <button type="button" data-ster="3" onclick="kiesSterren(3)" aria-label="3 sterren">★</button>
+                    <button type="button" data-ster="4" onclick="kiesSterren(4)" aria-label="4 sterren">★</button>
+                    <button type="button" data-ster="5" onclick="kiesSterren(5)" aria-label="5 sterren">★</button>
+                </div>
+                <p id="sterren-tekst" class="sterren-tekst">Tik op de sterren</p>
+                <label for="review-tekst" class="opmerking-label" style="text-align: left;">Wil je nog iets kwijt? (optioneel)</label>
+                <textarea id="review-tekst" class="opmerking-veld" maxlength="300" rows="3" placeholder="Wat vond je lekker, wat kan beter?"></textarea>
+                <button class="bestel-knop" id="review-verstuur" onclick="verstuurReview()" disabled>Beoordeling versturen</button>
+                <button class="verleng-secundair" style="width: 100%; margin-top: 8px;" onclick="sluitReview()">Overslaan</button>
+                <p id="review-melding" style="font-size: 0.85rem; color: var(--rood); font-weight: bold;"></p>
+            </div>
+            <div id="review-bedankt" style="display: none;">
+                <h2>¡Muchas gracias!</h2>
+                <p>Bedankt voor je beoordeling. Graag tot ziens bij Las Tapas! 👋</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Serveerster roepen -->
+    <div id="roep-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>🙋 Serveerster roepen</h2>
+            <p style="color: var(--grijs); font-size: 0.9rem;">Waarmee kunnen we helpen? Kies een onderwerp.</p>
+            <div class="reden-grid">
+                <button type="button" class="reden-knop" data-reden="vraag" onclick="kiesReden('vraag')">❓ Ik heb een vraag</button>
+                <button type="button" class="reden-knop" data-reden="probleem" onclick="kiesReden('probleem')">⚠️ Probleem met bestelling</button>
+                <button type="button" class="reden-knop" data-reden="allergie" onclick="kiesReden('allergie')">🥜 Allergie of dieet</button>
+                <button type="button" class="reden-knop" data-reden="anders" onclick="kiesReden('anders')">💬 Iets anders</button>
+            </div>
+            <label for="roep-tekst" class="opmerking-label" style="text-align: left;">Toelichting (optioneel)</label>
+            <textarea id="roep-tekst" class="opmerking-veld" maxlength="200" rows="2" placeholder="Bijv. we missen nog de patatas bravas"></textarea>
+            <button class="bestel-knop" id="roep-verstuur" onclick="verstuurOproep()">Roep een serveerster</button>
+            <button class="verleng-secundair" style="width: 100%; margin-top: 8px;" onclick="sluitRoepModal()">Annuleren</button>
+            <p id="roep-melding" style="font-size: 0.85rem; color: var(--rood); font-weight: bold;"></p>
+        </div>
+    </div>
+
+    <!-- Tijd verlengen / tijd is om -->
+    <div id="verleng-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="verleng-titel">Tijd verlengen</h2>
+            <p id="verleng-tekst" style="line-height: 1.5;"></p>
+            <div class="verleng-knoppen">
+                <button class="bestel-knop" id="verleng-knop" onclick="verlengTijd()">Verlengen</button>
+                <button class="verleng-secundair" id="verleng-afrekenen" onclick="sluitVerlengModal(); vraagRekening();">Afrekenen</button>
+                <button class="verleng-secundair" id="verleng-annuleer" onclick="sluitVerlengModal()">Niet nu</button>
+            </div>
+            <p id="verleng-melding" style="font-size: 0.85rem; color: var(--rood); font-weight: bold;"></p>
+        </div>
+    </div>
+
+    <header>
+        <div>
+            <h1>🍷 Las Tapas <span class="ondertitel">Taberna española · all you can eat</span></h1>
+            <small id="gekozen-pakket-label" style="color: #faedcd; font-style: italic;"></small>
+        </div>
+        <div class="header-rechts">
+            <span id="taal-plek"></span>
+            <div class="tafel-badge" id="tafel-label">Tafel 1</div>
+            <button class="hulp-knop" id="hulp-knop" onclick="openRoepModal()">🙋 <span class="knop-lang">Serveerster roepen</span><span class="knop-kort">Hulp</span></button>
+            <button class="betaal-knop" onclick="vraagRekening()">💳 <span class="knop-lang">Klaar, ik wil betalen</span><span class="knop-kort">Betalen</span></button>
+        </div>
+    </header>
+
+    <!-- Tot wanneer kunnen de gasten dineren? -->
+    <div class="oproep-balk" id="oproep-balk" style="display: none;">
+        <span id="oproep-balk-tekst"></span>
+        <button id="oproep-annuleer" onclick="annuleerOproep()">Annuleren</button>
+    </div>
+
+    <div class="tijd-balk" id="tijd-balk" style="display: none;">
+        <span id="tijd-balk-tekst"></span>
+        <button id="tijd-balk-knop" onclick="openVerlengModal(tijdIsOm())">Tijd verlengen</button>
+    </div>
+
+    <div class="container">
+        <div>
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="wisselTab('menu', this)">📖 Het Menu</button>
+                <button class="tab-btn" onclick="wisselTab('bestellingen', this)">📋 Mijn Bestellingen<span class="tab-extra"> (Live)</span></button>
+            </div>
+
+            <!-- Tab 1: Menu -->
+            <div id="tab-menu" class="tab-content active">
+                <div class="menu-sectie">
+                    <h2>Nuestra Carta <span class="kop-ondertitel">Onze kaart · onbeperkt tapas</span></h2>
+                    <p class="allergie-info">⚠️ Allergie of dieetwens? Zet het in de opmerking bij je bestelling of vraag het personeel.</p>
+                    
+                    <div class="categorie-balk">
+                        <button class="cat-btn active" onclick="filterMenu('alles', this)">✨ Todo <small>alles</small></button>
+                        <button class="cat-btn" onclick="filterMenu('voorgerecht', this)">🫒 Entrantes <small>voorgerechten</small></button>
+                        <button class="cat-btn" onclick="filterMenu('hoofdgerecht', this)">🔥 Tapas calientes <small>warm</small></button>
+                        <button class="cat-btn" onclick="filterMenu('drankje', this)">🍷 Bebidas <small>drankjes</small></button>
+                        <button class="cat-btn" onclick="filterMenu('toetje', this)">🍮 Postres <small>toetjes</small></button>
+                    </div>
+
+                    <div class="menuraster" id="menu-raster"></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Bestelstatus -->
+            <div id="tab-bestellingen" class="tab-content">
+                <div class="status-sectie">
+                    <h2>Tus Pedidos · Tafel <span id="tafel-nummer-titel">1</span> <span class="kop-ondertitel">Jullie bestellingen, live bijgewerkt</span></h2>
+                    <p style="color: var(--grijs); font-size: 0.9rem;">Gezelschap van <span id="gast-naam-titel" style="font-weight: bold;"></span> (<span id="gezelschap-titel"></span>).</p>
+                    <div id="mijn-bestellingen-lijst" style="margin-top: 15px;">
+                        <p style="color: var(--grijs); font-style: italic;">Laden...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rechterkant: Mandje -->
+        <div class="mandje" id="mandje">
+            <div class="mand-sheet-kop">
+                <span class="mand-greep"></span>
+                <button class="mand-sluit" onclick="sluitMandSheet()" aria-label="Mandje sluiten">✕</button>
+            </div>
+            <h3>Tu Pedido <span class="kop-ondertitel">Jouw bestelling</span></h3>
+            <div class="mand-regels" id="mand-regels">
+                <p style="color: var(--grijs); font-style: italic; text-align: center;">Je mandje is nog leeg</p>
+            </div>
+            <div id="mand-extra"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom: 15px; color: var(--inkt);">
+                <span>Totaal items:</span>
+                <span id="totaal-aantal">0</span>
+            </div>
+            <div id="ronde-info" class="ronde-info" style="display: none;"></div>
+            <label for="opmerking" class="opmerking-label">Opmerking of allergie (optioneel)</label>
+            <textarea id="opmerking" class="opmerking-veld" maxlength="200" rows="2" placeholder="Bijv. zonder knoflook, notenallergie"></textarea>
+            <button class="bestel-knop" id="bestel-knop" onclick="plaatsBestelling()" disabled>¡Pedir Ahora! (Bestel)</button>
+            <p id="melding"></p>
+        </div>
+    </div>
+
+    <footer class="voet">
+        <strong>¡Buen provecho!</strong>
+        Las Tapas · Taberna española · Allergie of vraag? Tik op 🙋 bovenin.
+    </footer>
+
+    <!-- Alleen op de telefoon: balk onderin + donkere achtergrond achter het mandje -->
+    <div class="mand-achtergrond" id="mand-achtergrond" onclick="sluitMandSheet()"></div>
+    <button class="mand-balk leeg" id="mand-balk" onclick="openMandSheet()">
+        <span class="mand-balk-aantal" id="mand-balk-aantal">0</span>
+        <span class="mand-balk-tekst" id="mand-balk-tekst">Tik op + om iets te kiezen</span>
+        <span class="mand-balk-actie">Bekijken</span>
+    </button>
+
+    <script>
+        // Voor ngrok (gratis versie): sla de ngrok-waarschuwingspagina over bij
+        // alle data-aanvragen, anders krijgt de pagina HTML terug in plaats van data.
+        // De geheime tafelcode uit de QR-code (bijv. klant.html?tafel=9&code=a1b2c3d4)
+        const TAFEL_CODE = new URLSearchParams(window.location.search).get('code') || '';
+
+        (function () {
+            const origineleFetch = window.fetch;
+            window.fetch = function (url, opties = {}) {
+                opties.headers = Object.assign({}, opties.headers, { 'ngrok-skip-browser-warning': 'true' });
+
+                // Bij elke aanvraag naar de server automatisch de tafelcode meesturen
+                if (typeof url === 'string' && url.startsWith('bestelling.php')) {
+                    const methode = (opties.method || 'GET').toUpperCase();
+                    if (methode === 'GET') {
+                        url += (url.includes('?') ? '&' : '?') + 'code=' + encodeURIComponent(TAFEL_CODE);
+                    } else if (typeof opties.body === 'string') {
+                        try {
+                            const body = JSON.parse(opties.body);
+                            body.code = TAFEL_CODE;
+                            // Sessiecode van dit bezoek (zodat een afgesloten bezoek de tafel niet opnieuw opent)
+                            const tafel = new URLSearchParams(window.location.search).get('tafel') || '1';
+                            body.sessie = localStorage.getItem(`gast_sessie_tafel_${tafel}`) || '';
+                            opties.body = JSON.stringify(body);
+                        } catch (e) { /* geen JSON: niets toevoegen */ }
+                    }
+                    // Antwoord "sessie verlopen"? Dan is het bezoek afgesloten: terug naar het welkomstscherm
+                    return origineleFetch(url, opties).then(res => {
+                        res.clone().json().then(data => {
+                            if (data && data.code === 'sessie_verlopen' && window.sessieVerlopen) window.sessieVerlopen();
+                        }).catch(() => {});
+                        return res;
+                    });
+                }
+                return origineleFetch(url, opties);
+            };
+        })();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let tafelNummer = urlParams.get('tafel') || '1';
+        document.getElementById('tafel-label').innerText = `Tafel ${tafelNummer}`;
+        document.getElementById('tafel-nummer-titel').innerText = tafelNummer;
+
+        let huidigeGastNaam = localStorage.getItem(`gast_naam_tafel_${tafelNummer}`) || '';
+        let gekozenPakket = localStorage.getItem(`gast_pakket_tafel_${tafelNummer}`) || '';
+        let aantalVolw = parseInt(localStorage.getItem(`gast_volw_tafel_${tafelNummer}`)) || 2;
+        let aantalSenioren = parseInt(localStorage.getItem(`gast_sen_tafel_${tafelNummer}`)) || 0;
+        let aantalKind = parseInt(localStorage.getItem(`gast_kind_tafel_${tafelNummer}`)) || 0;
+        let mijnSessie = localStorage.getItem(`gast_sessie_tafel_${tafelNummer}`) || '';
+
+        let menuItems = [];   // komt uit de database (via view=config)
+
+        let voorraadMap = {};
+        let actieveCategorie = 'alles';
+        let mandje = {};
+        let config = null;      // prijzen en arrangementen, komen van de server
+        let tafelInfo = null;   // actuele gegevens van deze tafel (rekening, eindtijd)
+
+        // Tekst veilig tonen (voorkomt dat ingevoerde tekst als HTML wordt uitgevoerd)
+        function esc(tekst) {
+            return String(tekst ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function euro(bedrag) {
+            return '€ ' + Number(bedrag || 0).toFixed(2).replace('.', ',');
+        }
+        function aantalPersonen() {
+            return aantalVolw + aantalSenioren + aantalKind;
+        }
+        // Moeten drankjes voor dit arrangement apart betaald worden?
+        function drankjesBetaald() {
+            if (!config || !gekozenPakket || !config.pakketten[gekozenPakket]) return false;
+            return !config.pakketten[gekozenPakket].drank;
+        }
+        function drankPrijs(naam) {
+            return config && config.drankprijzen ? config.drankprijzen[naam] : undefined;
+        }
+        function wisLokaleSessie() {
+            ['naam', 'pakket', 'volw', 'sen', 'kind', 'sessie'].forEach(k => localStorage.removeItem(`gast_${k}_tafel_${tafelNummer}`));
+            huidigeGastNaam = '';
+            gekozenPakket = '';
+            mijnSessie = '';
+        }
+
+        function renderPakketten() {
+            const el = document.getElementById('pakket-opties');
+            if (!config || !config.pakketten) return;
+            const namen = Object.keys(config.pakketten);
+            el.innerHTML = namen.map((naam, i) => {
+                const p = config.pakketten[naam];
+                const uren = p.duur % 60 === 0 ? `${p.duur / 60} uur` : `${p.duur} min`;
+                return `
+                    <div class="pakket-optie" data-pakket="${esc(naam)}" onclick="selecteerPakket(this.dataset.pakket)">
+                        <h3>${i + 1}. ${esc(naam)}</h3>
+                        <p>${esc(p.omschrijving)} (${uren})</p>
+                        <span class="pakket-prijs-info">Volw: ${euro(p.prijs.volw)} | 65+: ${euro(p.prijs.sen)} | Kind: ${euro(p.prijs.kind)}</span>
+                    </div>`;
+            }).join('');
+        }
+
+        // Geen of een verkeerde tafelcode: niet laten bestellen
+        function toonOngeldigeCode() {
+            if (document.getElementById('ongeldig-code')) return;
+            ['sessie-modal', 'betaal-modal', 'qr-modal', 'contant-modal', 'verleng-modal', 'roep-modal', 'aansluit-modal'].forEach(id =>
+                document.getElementById(id).style.display = 'none');
+            const div = document.createElement('div');
+            div.id = 'ongeldig-code';
+            div.className = 'ongeldig-code';
+            div.innerHTML = `<div>
+                <h2>🍷 Las Tapas</h2>
+                <p><strong>Deze QR-code werkt niet (meer).</strong></p>
+                <p>Scan de QR-code die op jullie tafel staat, of vraag het personeel om hulp.</p>
+            </div>`;
+            document.body.appendChild(div);
+        }
+
+        function laadConfig() {
+            fetch('bestelling.php?view=config&_=' + Date.now(), { cache: 'no-store' })
+                .then(res => res.json())
+                .then(data => {
+                    config = data;
+                    menuItems = (data.menu || []).map(m => ({
+                        id: m.id, naam: m.naam, omschrijving: m.omschrijving,
+                        categorie: m.categorie, prijs: Number(m.prijs) || 0, allergenen: m.allergenen || []
+                    }));
+                    // Gerechten die niet meer op het menu staan uit het mandje halen
+                    for (let id in mandje) {
+                        if (!menuItems.find(p => p.id === id)) delete mandje[id];
+                    }
+                    renderPakketten();
+                    renderMenu();
+                    renderMandje();
+                })
+                .catch(() => setTimeout(laadConfig, 3000));
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            laadConfig();
+            if (!TAFEL_CODE) {
+                toonOngeldigeCode();
+                return;
+            }
+            // Eerst checken of er al een betaling loopt voor deze tafel (bijv. na
+            // een herlaad van de pagina). Zo niet, dan pas de normale sessie tonen.
+            fetch(`bestelling.php?view=tafels&tafel=${tafelNummer}&_=` + Date.now(), { cache: 'no-store' })
+                .then(res => {
+                    if (res.status === 403) {
+                        toonOngeldigeCode();
+                        throw new Error('Ongeldige tafelcode');
+                    }
+                    return res.json();
+                })
+                .then(tafels => {
+                    const info = tafels[tafelNummer];
+                    const lokaalBezoek = !!(huidigeGastNaam && gekozenPakket);
+                    // Hoort deze telefoon bij het bezoek dat nu aan de tafel zit?
+                    const hoortErbij = !!info && (info.sessie === '' || info.sessie === mijnSessie);
+
+                    if (lokaalBezoek && hoortErbij) {
+                        if (info.status === 'betalen' || info.status === 'geaccepteerd') {
+                            toonBetaalSlot(info);
+                            startBetaalPolling();
+                        } else {
+                            document.getElementById('sessie-modal').style.display = 'none';
+                            updateHeaderInfo();
+                            meldTafelBezet();
+                        }
+                    } else if (lokaalBezoek && !hoortErbij) {
+                        // Het vorige bezoek is afgesloten (of er zit nu iemand anders): oude gegevens weg
+                        wisLokaleSessie();
+                        if (info) toonAansluiten(info);
+                        else toonWelkom(true);
+                    } else if (info) {
+                        // Nieuwe telefoon aan een tafel die al in gebruik is
+                        toonAansluiten(info);
+                    } else {
+                        toonWelkom(sessionStorage.getItem('bezoek_afgesloten') === '1');
+                    }
+                    sessionStorage.removeItem('bezoek_afgesloten');
+                })
+                .catch(err => {
+                    console.error('Fout bij controleren tafelstatus:', err);
+                    if (document.getElementById('ongeldig-code')) return;
+                    if (huidigeGastNaam && gekozenPakket) {
+                        document.getElementById('sessie-modal').style.display = 'none';
+                        updateHeaderInfo();
+                        meldTafelBezet();
+                    } else {
+                        document.getElementById('sessie-modal').style.display = 'flex';
+                    }
+                });
+            renderMenu();        // meteen tonen, ook als de server nog niet heeft geantwoord
+            laadVoorraadData();  // daarna de actuele voorraad ophalen en bijwerken
+        });
+
+        let voorraadRetryTimer = null;
+
+        function laadVoorraadData() {
+            // cache: 'no-store' + tijdstempel: voorkomt dat de telefoon een oude,
+            // opgeslagen (lege) versie van het antwoord gebruikt.
+            fetch(`bestelling.php?client=1&tafel=${tafelNummer}&_=` + Date.now(), { cache: 'no-store' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.voorraad) {
+                        voorraadMap = {};
+                        data.voorraad.forEach(item => {
+                            voorraadMap[item.naam] = parseInt(item.aantal);
+                        });
+                    }
+                    renderMenu();
+                })
+                .catch(err => {
+                    console.error('Fout bij ophalen voorraad, nieuwe poging over 2 sec:', err);
+                    // Menu toch tonen (zonder voorraadinfo) en het zo opnieuw proberen
+                    renderMenu();
+                    clearTimeout(voorraadRetryTimer);
+                    voorraadRetryTimer = setTimeout(laadVoorraadData, 2000);
+                });
+        }
+
+        function selecteerPakket(pakketNaam) {
+            const naamInput = document.getElementById('input-gast-naam').value.trim();
+            const volwInput = parseInt(document.getElementById('input-volwassenen').value) || 0;
+            const senInput = parseInt(document.getElementById('input-senioren').value) || 0;
+            const kindInput = parseInt(document.getElementById('input-kinderen').value) || 0;
+            const foutVelden = document.getElementById('modal-fout');
+
+            if (!naamInput) {
+                foutVelden.innerText = 'Vul eerst je naam in!';
+                return;
+            }
+            if ((volwInput + senInput + kindInput) <= 0) {
+                foutVelden.innerText = 'Geef minimaal 1 persoon op in het gezelschap!';
+                return;
+            }
+
+            huidigeGastNaam = naamInput;
+            gekozenPakket = pakketNaam;
+            aantalVolw = volwInput;
+            aantalSenioren = senInput;
+            aantalKind = kindInput;
+
+            localStorage.setItem(`gast_naam_tafel_${tafelNummer}`, huidigeGastNaam);
+            localStorage.setItem(`gast_pakket_tafel_${tafelNummer}`, gekozenPakket);
+            localStorage.setItem(`gast_volw_tafel_${tafelNummer}`, aantalVolw);
+            localStorage.setItem(`gast_sen_tafel_${tafelNummer}`, aantalSenioren);
+            localStorage.setItem(`gast_kind_tafel_${tafelNummer}`, aantalKind);
+
+            updateHeaderInfo();
+            document.getElementById('sessie-modal').style.display = 'none';
+            meldTafelBezet();
+            renderMenu();
+            laadVoorraadData();
+        }
+
+        function meldTafelBezet() {
+            const payload = {
+                actie: 'update_tafel_status',
+                tafel: parseInt(tafelNummer),
+                status: 'bezet',
+                gast_naam: huidigeGastNaam,
+                volw: aantalVolw,
+                sen: aantalSenioren,
+                kind: aantalKind,
+                pakket: gekozenPakket
+            };
+
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.succes && data.sessie) {
+                    mijnSessie = data.sessie;
+                    localStorage.setItem(`gast_sessie_tafel_${tafelNummer}`, mijnSessie);
+                } else if (data.code === 'tafel_bezet') {
+                    // Iemand anders heeft de tafel net aangemeld
+                    wisLokaleSessie();
+                    toonAansluiten(data.tafel);
+                    return;
+                }
+                laadTafelInfo();
+            })
+            .catch(err => console.error('Fout bij bijwerken tafelstatus:', err));
+        }
+
+        // ===== Welkom, aansluiten en afgesloten bezoek =====
+        function toonWelkom(metMelding) {
+            document.getElementById('aansluit-modal').style.display = 'none';
+            document.getElementById('welkom-melding').style.display = metMelding ? 'block' : 'none';
+            document.getElementById('sessie-modal').style.display = 'flex';
+        }
+
+        let aansluitInfo = null;
+        function toonAansluiten(info) {
+            aansluitInfo = info;
+            const personen = (Number(info.volw) || 0) + (Number(info.sen) || 0) + (Number(info.kind) || 0);
+            document.getElementById('aansluit-tekst').innerHTML =
+                `Tafel ${esc(tafelNummer)} is al in gebruik door <strong>${esc(info.gast_naam || 'een gezelschap')}</strong>` +
+                ` (${personen} ${personen === 1 ? 'persoon' : 'personen'}, ${esc(info.pakket || '')}).`;
+            document.getElementById('aansluit-melding').innerText = '';
+            document.getElementById('sessie-modal').style.display = 'none';
+            document.getElementById('aansluit-modal').style.display = 'flex';
+        }
+
+        function sluitAan() {
+            const knop = document.getElementById('aansluit-knop');
+            knop.disabled = true;
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actie: 'aansluiten', tafel: parseInt(tafelNummer) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                knop.disabled = false;
+                if (!data.succes) {
+                    document.getElementById('aansluit-melding').innerText = data.melding || 'Aansluiten is niet gelukt.';
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
+                // Gegevens van het gezelschap overnemen
+                huidigeGastNaam = data.gast_naam;
+                gekozenPakket = data.pakket;
+                aantalVolw = data.volw;
+                aantalSenioren = data.sen;
+                aantalKind = data.kind;
+                mijnSessie = data.sessie;
+                localStorage.setItem(`gast_naam_tafel_${tafelNummer}`, huidigeGastNaam);
+                localStorage.setItem(`gast_pakket_tafel_${tafelNummer}`, gekozenPakket);
+                localStorage.setItem(`gast_volw_tafel_${tafelNummer}`, aantalVolw);
+                localStorage.setItem(`gast_sen_tafel_${tafelNummer}`, aantalSenioren);
+                localStorage.setItem(`gast_kind_tafel_${tafelNummer}`, aantalKind);
+                localStorage.setItem(`gast_sessie_tafel_${tafelNummer}`, mijnSessie);
+
+                document.getElementById('aansluit-modal').style.display = 'none';
+                updateHeaderInfo();
+                renderMenu();
+                renderMandje();
+                if (data.status === 'betalen' || data.status === 'geaccepteerd') {
+                    laadTafelInfo().then(info => { if (info) toonBetaalSlot(info); });
+                    startBetaalPolling();
+                } else {
+                    laadTafelInfo();
+                }
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('aansluit-melding').innerText = 'Kan de server niet bereiken.';
+            });
+        }
+
+        function nietMijnTafel() {
+            document.getElementById('aansluit-melding').innerText =
+                'Scan de QR-code die op je eigen tafel staat, of vraag het personeel om hulp.';
+        }
+
+        // Het bezoek is afgesloten door het personeel: terug naar het welkomstscherm
+        let sessieVerlopenBezig = false;
+        window.sessieVerlopen = function () {
+            if (sessieVerlopenBezig) return;
+            sessieVerlopenBezig = true;
+            wisLokaleSessie();
+            sessionStorage.setItem('bezoek_afgesloten', '1');
+            location.reload();
+        };
+
+        // ===== Tafelgegevens: rekening en eindtijd =====
+        function laadTafelInfo() {
+            return fetch(`bestelling.php?view=tafels&tafel=${tafelNummer}&_=` + Date.now(), { cache: 'no-store' })
+                .then(res => res.json())
+                .then(tafels => {
+                    tafelInfo = tafels[tafelNummer] || null;
+
+                    // Is de tafel door het personeel afgesloten terwijl deze pagina nog open stond?
+                    // (Twee keer achter elkaar niet gevonden: dan opnieuw beginnen.)
+                    if (!tafelInfo && huidigeGastNaam && !betaalPollInterval) {
+                        tafelNietGevonden++;
+                        if (tafelNietGevonden >= 2) {
+                            bezoekAfgesloten();
+                            return null;
+                        }
+                    } else {
+                        tafelNietGevonden = 0;
+                    }
+                    // Zit er inmiddels een ander gezelschap aan deze tafel? Dan is ons bezoek voorbij
+                    if (tafelInfo && tafelInfo.sessie && mijnSessie && tafelInfo.sessie !== mijnSessie) {
+                        window.sessieVerlopen();
+                        return null;
+                    }
+
+                    updateTijdBalk();
+                    updateRondeInfo();
+                    updateOproepBalk();
+                    return tafelInfo;
+                })
+                .catch(err => console.error('Fout bij ophalen tafelgegevens:', err));
+        }
+
+        let tijdOpGetoond = false;
+        let tafelNietGevonden = 0;
+
+        // ===== Ronde-limiet (bijv. max. 3 gerechten per persoon per 10 minuten) =====
+        function etenInMandje() {
+            let n = 0;
+            for (let id in mandje) {
+                const item = menuItems.find(p => p.id === id);
+                if (item && item.categorie !== 'drankje') n += mandje[id];
+            }
+            return n;
+        }
+
+        function rondeOver() {
+            // null = geen limiet
+            if (!tafelInfo || !tafelInfo.ronde) return null;
+            return Math.max(0, tafelInfo.ronde.over - etenInMandje());
+        }
+
+        function updateRondeInfo() {
+            const el = document.getElementById('ronde-info');
+            if (!tafelInfo || !tafelInfo.ronde) {
+                el.style.display = 'none';
+                return;
+            }
+            const r = tafelInfo.ronde;
+            el.style.display = 'block';
+            if (r.over <= 0) {
+                el.className = 'ronde-info vol';
+                el.innerHTML = `🍽️ Deze ronde is vol.${r.volgende_ronde ? ` Vanaf <strong>${esc(r.volgende_ronde)}</strong> kunnen jullie weer gerechten bestellen.` : ''} Drankjes kunnen altijd.`;
+            } else {
+                el.className = 'ronde-info';
+                el.innerHTML = `🍽️ Deze ronde nog <strong>${Math.max(0, r.over - etenInMandje())}</strong> van ${r.limiet} gerechten `
+                    + `(${r.max_pp} per persoon per ${r.minuten} min). Drankjes tellen niet mee.`;
+            }
+        }
+
+        function updateTijdBalk() {
+            const balk = document.getElementById('tijd-balk');
+            const tekst = document.getElementById('tijd-balk-tekst');
+            const knop = document.getElementById('tijd-balk-knop');
+
+            if (!tafelInfo || tafelInfo.status !== 'bezet' || !huidigeGastNaam) {
+                balk.style.display = 'none';
+                return;
+            }
+            balk.style.display = 'flex';
+
+            if (!tafelInfo.eind_tijd_kort) {
+                // Nog niets besteld: de tijd is nog niet begonnen
+                const duur = config && config.pakketten[gekozenPakket] ? config.pakketten[gekozenPakket].duur / 60 : null;
+                tekst.innerHTML = duur
+                    ? `🕘 Jullie ${duur} uur beginnen bij de eerste bestelling.`
+                    : '🕘 Jullie tijd begint bij de eerste bestelling.';
+                knop.style.display = 'none';
+                balk.classList.remove('op');
+                return;
+            }
+
+            knop.style.display = 'inline-block';
+            if (tafelInfo.seconden_over > 0) {
+                tekst.innerHTML = `🕘 Jullie kunnen dineren tot <strong>${esc(tafelInfo.eind_tijd_kort)}</strong>`;
+                balk.classList.remove('op');
+                tijdOpGetoond = false;
+            } else {
+                tekst.innerHTML = '🕘 Jullie tijd zit erop.';
+                balk.classList.add('op');
+                // Eén keer vriendelijk vragen wat ze willen (niet steeds opnieuw opdringen)
+                if (!tijdOpGetoond && document.getElementById('betaal-modal').style.display !== 'flex') {
+                    tijdOpGetoond = true;
+                    openVerlengModal(true);
+                }
+            }
+            updateBestelKnop();
+        }
+
+        function tijdIsOm() {
+            return tafelInfo && tafelInfo.eind_tijd_kort && tafelInfo.seconden_over <= 0;
+        }
+
+        function verlengPrijsTotaal() {
+            if (!config) return 0;
+            return config.verleng_prijs_pp * aantalPersonen();
+        }
+
+        function openVerlengModal(tijdOp) {
+            if (!config || !tafelInfo) return;
+            const min = config.verleng_minuten;
+            const pp = euro(config.verleng_prijs_pp);
+            const totaal = euro(verlengPrijsTotaal());
+
+            // Nieuwe eindtijd uitrekenen (vanaf de huidige eindtijd, of vanaf nu als die voorbij is)
+            const basis = Math.max(Date.now(), Date.now() + (tafelInfo.seconden_over || 0) * 1000);
+            const nieuw = new Date(basis + min * 60000);
+            const nieuwKort = nieuw.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+
+            document.getElementById('verleng-titel').innerText = tijdOp ? 'Jullie tijd zit erop' : 'Tijd verlengen';
+            document.getElementById('verleng-tekst').innerHTML = (tijdOp
+                ? 'We hopen dat het heeft gesmaakt! Willen jullie nog wat langer blijven?<br><br>'
+                : '') +
+                `Verlengen met <strong>${min} minuten</strong> kost ${pp} per persoon. ` +
+                `Voor jullie ${aantalPersonen()} ${aantalPersonen() === 1 ? 'persoon' : 'personen'} is dat <strong>${totaal}</strong>. ` +
+                `Jullie kunnen dan dineren tot <strong>${nieuwKort}</strong>.`;
+            document.getElementById('verleng-knop').innerText = `Verlengen met ${min} min (${totaal})`;
+            document.getElementById('verleng-afrekenen').style.display = tijdOp ? 'block' : 'none';
+            document.getElementById('verleng-annuleer').innerText = tijdOp ? 'Terug naar het menu' : 'Niet nu';
+            document.getElementById('verleng-melding').innerText = '';
+            document.getElementById('verleng-modal').style.display = 'flex';
+        }
+
+        function sluitVerlengModal() {
+            document.getElementById('verleng-modal').style.display = 'none';
+        }
+
+        function verlengTijd() {
+            const knop = document.getElementById('verleng-knop');
+            knop.disabled = true;
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actie: 'verleng', tafel: parseInt(tafelNummer) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                knop.disabled = false;
+                if (data.succes) {
+                    tafelInfo = data.tafel;
+                    tijdOpGetoond = false;
+                    updateTijdBalk();
+                    sluitVerlengModal();
+                    toonBalkMelding(`✅ Verlengd tot ${tafelInfo.eind_tijd_kort}`);
+                } else {
+                    document.getElementById('verleng-melding').innerText = data.melding || 'Verlengen is niet gelukt.';
+                }
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('verleng-melding').innerText = 'Kan de server niet bereiken.';
+            });
+        }
+
+        // ===== Beoordeling na het betalen =====
+        let gekozenSterren = 0;
+        let reviewGetoond = false;
+        const STERREN_TEKST = ['', 'Slecht', 'Matig', 'Goed', 'Erg goed', '¡Excelente!'];
+
+        // Tafel afgesloten: na een betaling om een beoordeling vragen, anders gewoon opnieuw beginnen
+        function bezoekAfgesloten() {
+            if (reviewGetoond || sessieVerlopenBezig) return;
+            fetch(`bestelling.php?view=review_mogelijk&tafel=${tafelNummer}&_=` + Date.now(), { cache: 'no-store' })
+                .then(res => res.json())
+                .then(data => { if (data && data.mogelijk) toonReview(); else window.sessieVerlopen(); })
+                .catch(() => window.sessieVerlopen());
+        }
+
+        // De tafel is afgesloten: eerst om een beoordeling vragen, daarna opnieuw beginnen
+        function toonReview() {
+            if (reviewGetoond) return;
+            reviewGetoond = true;
+            if (betaalPollInterval) { clearInterval(betaalPollInterval); betaalPollInterval = null; }
+            if (oproepPollTimer) { clearInterval(oproepPollTimer); oproepPollTimer = null; }
+            ['sessie-modal', 'betaal-modal', 'qr-modal', 'contant-modal', 'verleng-modal', 'roep-modal', 'aansluit-modal'].forEach(id =>
+                document.getElementById(id).style.display = 'none');
+            sluitMandSheet();
+            wisLokaleSessie();
+            document.getElementById('review-modal').style.display = 'flex';
+        }
+
+        function kiesSterren(n) {
+            gekozenSterren = n;
+            document.querySelectorAll('#sterren button').forEach(b => b.classList.toggle('aan', Number(b.dataset.ster) <= n));
+            document.getElementById('sterren-tekst').innerText = STERREN_TEKST[n];
+            document.getElementById('review-verstuur').disabled = false;
+        }
+
+        function verstuurReview() {
+            const knop = document.getElementById('review-verstuur');
+            knop.disabled = true;
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actie: 'review',
+                    tafel: parseInt(tafelNummer),
+                    sterren: gekozenSterren,
+                    tekst: document.getElementById('review-tekst').value.trim()
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.succes) {
+                    document.getElementById('review-vragen').style.display = 'none';
+                    document.getElementById('review-bedankt').style.display = 'block';
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    // Geen beoordeling mogelijk (bijv. te lang geleden): gewoon opnieuw beginnen
+                    document.getElementById('review-melding').innerText = data.melding || 'Versturen is niet gelukt.';
+                    setTimeout(() => location.reload(), 2500);
+                }
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('review-melding').innerText = 'Kan de server niet bereiken.';
+            });
+        }
+
+        function sluitReview() {
+            location.reload();
+        }
+
+        // ===== Serveerster roepen =====
+        let gekozenReden = 'vraag';
+        let oproepPollTimer = null;
+        let vorigeOproepStatus = '';
+
+        function openRoepModal() {
+            if (!tafelInfo) {
+                alert('Vul eerst je naam in en kies een arrangement.');
+                return;
+            }
+            // Loopt er al een oproep? Dan niet nog een keer roepen
+            if (tafelInfo.oproep_status) {
+                const balk = document.getElementById('oproep-balk');
+                balk.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            kiesReden('vraag');
+            document.getElementById('roep-tekst').value = '';
+            document.getElementById('roep-melding').innerText = '';
+            document.getElementById('roep-modal').style.display = 'flex';
+        }
+
+        function sluitRoepModal() {
+            document.getElementById('roep-modal').style.display = 'none';
+        }
+
+        function kiesReden(reden) {
+            gekozenReden = reden;
+            document.querySelectorAll('.reden-knop').forEach(k => k.classList.toggle('gekozen', k.dataset.reden === reden));
+        }
+
+        function verstuurOproep() {
+            const knop = document.getElementById('roep-verstuur');
+            knop.disabled = true;
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actie: 'roep',
+                    tafel: parseInt(tafelNummer),
+                    reden: gekozenReden,
+                    tekst: document.getElementById('roep-tekst').value.trim()
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                knop.disabled = false;
+                if (data.succes) {
+                    tafelInfo = data.tafel;
+                    sluitRoepModal();
+                    updateOproepBalk();
+                } else {
+                    document.getElementById('roep-melding').innerText = data.melding || 'Roepen is niet gelukt.';
+                    laadTafelInfo();
+                }
+            })
+            .catch(() => {
+                knop.disabled = false;
+                document.getElementById('roep-melding').innerText = 'Kan de server niet bereiken.';
+            });
+        }
+
+        function annuleerOproep() {
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actie: 'roep_annuleer', tafel: parseInt(tafelNummer) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.succes) alert(data.melding || 'Annuleren is niet gelukt.');
+                laadTafelInfo();
+            });
+        }
+
+        // Balk bovenin bijwerken: verstuurd -> geaccepteerd -> (weg na afhandelen)
+        function updateOproepBalk() {
+            const balk = document.getElementById('oproep-balk');
+            const tekst = document.getElementById('oproep-balk-tekst');
+            const annuleer = document.getElementById('oproep-annuleer');
+            const hulpKnop = document.getElementById('hulp-knop');
+            const status = tafelInfo ? tafelInfo.oproep_status : '';
+
+            if (status === 'open') {
+                balk.style.display = 'flex';
+                balk.classList.remove('geaccepteerd');
+                tekst.innerHTML = '🙋 Je oproep is verstuurd. Een serveerster komt zo snel mogelijk<span class="wacht-puntjes"></span>';
+                annuleer.style.display = 'inline-block';
+            } else if (status === 'geaccepteerd') {
+                balk.style.display = 'flex';
+                balk.classList.add('geaccepteerd');
+                const wie = tafelInfo.oproep_door ? `<strong>${esc(tafelInfo.oproep_door)}</strong>` : 'Een serveerster';
+                tekst.innerHTML = `✅ ${wie} heeft je oproep geaccepteerd en komt naar tafel ${esc(tafelNummer)}.`;
+                annuleer.style.display = 'none';
+            } else {
+                balk.style.display = 'none';
+                if (vorigeOproepStatus === 'geaccepteerd') toonBalkMelding('✅ Oproep afgehandeld');
+            }
+            hulpKnop.classList.toggle('actief', !!status);
+            vorigeOproepStatus = status || '';
+
+            // Zolang er een oproep loopt, vaker kijken of de serveerster heeft geaccepteerd
+            if (status && !oproepPollTimer) {
+                oproepPollTimer = setInterval(laadTafelInfo, 3000);
+            } else if (!status && oproepPollTimer) {
+                clearInterval(oproepPollTimer);
+                oproepPollTimer = null;
+            }
+        }
+
+        // ===== Betalen =====
+        function renderRekening(info) {
+            const el = document.getElementById('rekening-overzicht');
+            if (!info || !info.rekening || info.rekening.regels.length === 0) {
+                el.innerHTML = '';
+                return;
+            }
+            el.innerHTML = info.rekening.regels.map(r =>
+                `<div class="rekening-regel"><span>${esc(r.omschrijving)}</span><span>${euro(r.bedrag)}</span></div>`
+            ).join('') + `<div class="rekening-totaal"><span>Totaal</span><span>${euro(info.rekening.totaal)}</span></div>`;
+            document.getElementById('qr-bedrag').innerText = 'Te betalen: ' + euro(info.rekening.totaal);
+        }
+
+        function vraagRekening() {
+            renderRekening(tafelInfo);
+            document.getElementById('betaal-modal').style.display = 'flex';
+            laadTafelInfo().then(info => renderRekening(info));
+        }
+
+        function sluitBetaalModal() {
+            document.getElementById('betaal-modal').style.display = 'none';
+        }
+
+        // ===== Bon: geen, per e-mail of op papier =====
+        let bonKeuze = 'geen';
+        function kiesBon(keuze) {
+            bonKeuze = keuze;
+            document.querySelectorAll('.bon-optie').forEach(b => b.classList.toggle('gekozen', b.dataset.bon === keuze));
+            const veld = document.getElementById('bon-email');
+            const uitleg = document.getElementById('bon-uitleg');
+            veld.hidden = keuze !== 'email';
+            veld.classList.remove('fout');
+            uitleg.classList.remove('fout');
+            uitleg.innerText = keuze === 'email' ? 'De bon wordt gemaild zodra de betaling is afgerond.'
+                             : keuze === 'papier' ? 'De serveerster neemt een papieren bon voor je mee.' : '';
+            if (keuze === 'email') {
+                const bewaard = localStorage.getItem('bon_email') || '';
+                if (!veld.value && bewaard) veld.value = bewaard;
+                veld.focus();
+            }
+        }
+
+        // Geeft false terug als het e-mailadres nog niet klopt
+        function controleerBon() {
+            if (bonKeuze !== 'email') return true;
+            const veld = document.getElementById('bon-email');
+            const adres = veld.value.trim();
+            const geldig = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(adres);
+            if (!geldig) {
+                veld.classList.add('fout');
+                const uitleg = document.getElementById('bon-uitleg');
+                uitleg.classList.add('fout');
+                uitleg.innerText = 'Vul een geldig e-mailadres in voor de bon.';
+                veld.focus();
+                return false;
+            }
+            localStorage.setItem('bon_email', adres);
+            return true;
+        }
+
+        function kiesBetaalMethode(methode) {
+            if (!controleerBon()) return;
+            document.getElementById('betaal-modal').style.display = 'none';
+
+            if (methode === 'online') {
+                // Eerst betalen via de QR-code; de serveerster krijgt pas een melding
+                // als de klant op "Ik heb betaald" tikt.
+                document.getElementById('qr-modal').style.display = 'flex';
+            } else if (methode === 'contant') {
+                stuurBetaalVerzoek('contant');
+            }
+        }
+
+        function bevestigOnlineBetaling() {
+            stuurBetaalVerzoek('online');
+        }
+
+        function stuurBetaalVerzoek(betaalmethode) {
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actie: 'update_tafel_status',
+                    tafel: parseInt(tafelNummer),
+                    status: 'betalen',
+                    betaalmethode: betaalmethode,
+                    bon_keuze: bonKeuze,
+                    bon_email: bonKeuze === 'email' ? document.getElementById('bon-email').value.trim() : '',
+                    bon_taal: localStorage.getItem('taal') || 'nl'
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.succes) alert(data.melding || 'Betaalverzoek versturen is niet gelukt.');
+            })
+            .catch(err => console.error('Fout bij betaalverzoek:', err));
+
+            toonBetaalSlot({ status: 'betalen', betaalmethode: betaalmethode, geaccepteerd_door: '' });
+            startBetaalPolling();
+        }
+
+        // Scherm "op slot" zolang de betaling loopt (contant of online-controle)
+        function toonBetaalSlot(info) {
+            ['sessie-modal', 'betaal-modal', 'qr-modal', 'verleng-modal', 'roep-modal', 'aansluit-modal'].forEach(id =>
+                document.getElementById(id).style.display = 'none');
+            document.getElementById('contant-modal').style.display = 'flex';
+            sluitMandSheet();
+
+            const online = info.betaalmethode === 'online';
+            const naam = info.geaccepteerd_door ? `<strong>${esc(info.geaccepteerd_door)}</strong>` : 'De serveerster';
+            const tekstEl = document.getElementById('contant-modal-tekst');
+            const stap1 = document.getElementById('stap-verstuurd');
+            const stap2 = document.getElementById('stap-geaccepteerd');
+            const lijn = document.querySelector('#contant-modal .stap-lijn');
+
+            document.getElementById('betaal-slot-titel').innerText = online ? 'Betaling controleren' : 'Contant betalen';
+            const bonInfo = document.getElementById('bon-slot-info');
+            const keuze = info.bon_keuze || bonKeuze;
+            const adres = info.bon_email || (keuze === 'email' ? document.getElementById('bon-email').value.trim() : '');
+            bonInfo.innerHTML = keuze === 'email' ? `📧 De bon wordt gemaild naar <strong>${esc(adres)}</strong>`
+                              : keuze === 'papier' ? '🧾 De serveerster neemt een papieren bon mee' : '';
+            bonInfo.style.display = bonInfo.innerHTML ? 'block' : 'none';
+
+            if (info.status === 'geaccepteerd') {
+                tekstEl.innerHTML = online
+                    ? `✅ ${naam} komt naar tafel ${esc(tafelNummer)} om jullie online betaling te controleren.`
+                    : `✅ ${naam} heeft jullie verzoek geaccepteerd en is onderweg naar tafel ${esc(tafelNummer)} om de betaling in ontvangst te nemen!`;
+                stap1.className = 'betaal-stap actief';
+                lijn.className = 'stap-lijn actief';
+                stap2.className = 'betaal-stap actief';
+            } else {
+                tekstEl.innerHTML = online
+                    ? '📨 Bedankt! De bediening heeft een melding ontvangen. Een serveerster komt even langs om te controleren of de betaling gelukt is.'
+                    : '📨 De bediening heeft een melding ontvangen dat jullie contant willen betalen. Zodra een serveerster het verzoek accepteert, zie je dat hier.';
+                stap1.className = 'betaal-stap actief';
+                lijn.className = 'stap-lijn';
+                stap2.className = 'betaal-stap bezig';
+            }
+        }
+
+        let betaalPollInterval = null;
+
+        // Zolang de betaling loopt, elke 3 seconden de status opvragen. Zodra de
+        // serveerster de tafel heeft vrijgemaakt, begint het klantscherm opnieuw.
+        function startBetaalPolling() {
+            if (betaalPollInterval) return;
+
+            betaalPollInterval = setInterval(() => {
+                fetch(`bestelling.php?view=tafels&tafel=${tafelNummer}&_=` + Date.now(), { cache: 'no-store' })
+                    .then(res => res.json())
+                    .then(tafels => {
+                        const info = tafels[tafelNummer];
+                        const status = info ? info.status : 'vrij';
+
+                        if (status === 'betalen' || status === 'geaccepteerd') {
+                            toonBetaalSlot(info);
+                        } else {
+                            clearInterval(betaalPollInterval);
+                            betaalPollInterval = null;
+                            bezoekAfgesloten();
+                        }
+                    })
+                    .catch(err => console.error('Fout bij controleren betaalstatus:', err));
+            }, 3000);
+        }
+
+        function updateHeaderInfo() {
+            let totaalPersonen = aantalVolw + aantalSenioren + aantalKind;
+            document.getElementById('gekozen-pakket-label').innerText = `${huidigeGastNaam} (${totaalPersonen}p) | ${gekozenPakket}`;
+            document.getElementById('gast-naam-titel').innerText = huidigeGastNaam;
+            document.getElementById('gezelschap-titel').innerText = `${aantalVolw} volw, ${aantalSenioren} sen, ${aantalKind} kind`;
+        }
+
+        function wisselTab(tabNaam, element) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            element.classList.add('active');
+            if (tabNaam === 'menu') {
+                document.getElementById('tab-menu').classList.add('active');
+                laadVoorraadData();
+            } else {
+                document.getElementById('tab-bestellingen').classList.add('active');
+                laadTafelBestellingen();
+            }
+        }
+
+        function filterMenu(categorie, element) {
+            actieveCategorie = categorie;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const raster = document.getElementById('menu-raster');
+            let gefilterd = menuItems;
+            if (actieveCategorie !== 'alles') {
+                gefilterd = menuItems.filter(item => item.categorie === actieveCategorie);
+            }
+
+            const categorieNamen = {
+                voorgerecht: '🫒 Entrantes <small>voorgerechten</small>',
+                hoofdgerecht: '🔥 Tapas calientes <small>warme tapas</small>',
+                drankje: '🍷 Bebidas <small>drankjes</small>',
+                toetje: '🍮 Postres <small>toetjes</small>'
+            };
+            let vorigeCategorie = null;
+
+            if (menuItems.length === 0) {
+                raster.innerHTML = '<p style="padding: 15px; color: var(--grijs); font-style: italic;">Menu laden...</p>';
+                return;
+            }
+
+            raster.innerHTML = gefilterd.map(item => {
+                const allergenenHTML = (item.allergenen || []).length && config && config.allergenen
+                    ? `<p class="allergenen">${item.allergenen.map(a => config.allergenen[a]
+                        ? `<span class="allergeen" title="Bevat ${esc(config.allergenen[a].label)}">${config.allergenen[a].icoon} ${esc(config.allergenen[a].label)}</span>`
+                        : '').join('')}</p>`
+                    : '';
+                // Kopje per categorie (alleen zichtbaar op de telefoon, bij "Alles")
+                let kop = '';
+                if (actieveCategorie === 'alles' && item.categorie !== vorigeCategorie) {
+                    kop = `<h4 class="cat-kop">${categorieNamen[item.categorie] || esc(item.categorie)}</h4>`;
+                }
+                vorigeCategorie = item.categorie;
+
+                let actueleVoorraad = voorraadMap[item.naam] !== undefined ? voorraadMap[item.naam] : 99;
+                let inMandje = mandje[item.id] || 0;
+                let isOp = actueleVoorraad <= 0 || inMandje >= actueleVoorraad;
+
+                let waarschuwingHTML = '';
+                if (actueleVoorraad <= 5 && actueleVoorraad > 0) {
+                    waarschuwingHTML = `<p style="color: #e76f51; font-size: 0.75rem; font-weight: bold; margin: 0 0 6px 0;">⚠️ Nog maar ${actueleVoorraad} over!</p>`;
+                } else if (actueleVoorraad <= 0) {
+                    waarschuwingHTML = `<p style="color: #b8383b; font-size: 0.75rem; font-weight: bold; margin: 0 0 6px 0;">❌ Uitverkocht</p>`;
+                }
+
+                return kop + `
+                    <div class="product-kaart" style="${actueleVoorraad <= 0 ? 'opacity: 0.6;' : ''}">
+                        <div class="product-info">
+                            <h3>${esc(item.naam)}</h3>
+                            <p>${esc(item.omschrijving)}</p>
+                            ${allergenenHTML}
+                            ${item.categorie === 'drankje' && drankjesBetaald() && drankPrijs(item.naam) !== undefined
+                                ? `<p class="drank-prijs">${euro(drankPrijs(item.naam))} · niet inbegrepen</p>` : ''}
+                            ${waarschuwingHTML}
+                        </div>
+                        <div class="product-onder">
+                            <button class="knop-toevoegen" ${isOp ? 'style="background-color: #d8d8d8; cursor: not-allowed;" disabled' : ''} onclick="voegToe('${esc(item.id)}')" aria-label="${esc(item.naam)} toevoegen">+${inMandje > 0 ? `<span class="in-mand">${inMandje}</span>` : ''}</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function voegToe(id) {
+            const item = menuItems.find(p => p.id === id);
+            if (!item) return;
+
+            if (item.categorie !== 'drankje' && rondeOver() !== null && rondeOver() <= 0) {
+                const r = tafelInfo.ronde;
+                const wanneer = r.volgende_ronde ? ` Vanaf ${r.volgende_ronde} kan het weer.` : '';
+                toonBalkMelding(`Ronde vol: max. ${r.limiet} gerechten per ${r.minuten} min`);
+                alert(`Per ronde van ${r.minuten} minuten kunnen jullie ${r.limiet} gerechten bestellen (${r.max_pp} per persoon).${wanneer} Drankjes kunnen altijd.`);
+                return;
+            }
+            let actueleVoorraad = voorraadMap[item.naam] !== undefined ? voorraadMap[item.naam] : 99;
+            let huidigAantalInMand = mandje[id] || 0;
+
+            if (huidigAantalInMand < actueleVoorraad) {
+                mandje[id] = huidigAantalInMand + 1;
+                renderMandje();
+                renderMenu();
+            } else {
+                alert(`Je hebt al het maximum aantal (${actueleVoorraad}) van dit item in je mandje gezet.`);
+            }
+        }
+
+        function verwijderUitMand(id) {
+            if (mandje[id] > 1) {
+                mandje[id]--;
+            } else {
+                delete mandje[id];
+            }
+            renderMandje();
+            renderMenu();
+        }
+
+        function renderMandje() {
+            const container = document.getElementById('mand-regels');
+            const bestelKnop = document.getElementById('bestel-knop');
+            let html = '';
+            let aantalProducten = 0;
+
+            for (let id in mandje) {
+                const item = menuItems.find(p => p.id === id);
+                if (!item) continue;
+                const aantal = mandje[id];
+                aantalProducten += aantal;
+
+                html += `
+                    <div class="mand-item">
+                        <div>
+                            <strong>${esc(item.naam)}</strong><br>
+                            <small style="color: var(--grijs);">${aantal}x geselecteerd</small>
+                        </div>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <button onclick="verwijderUitMand('${id}')">-</button>
+                            <span style="padding: 0 4px; font-weight: bold; min-width: 12px; text-align: center;">${aantal}</span>
+                            <button onclick="voegToe('${id}')">+</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (aantalProducten === 0) {
+                container.innerHTML = '<p style="color: var(--grijs); font-style: italic; text-align: center;">Je mandje is nog leeg</p>';
+                bestelKnop.disabled = true;
+            } else {
+                container.innerHTML = html;
+                bestelKnop.disabled = false;
+            }
+
+            document.getElementById('totaal-aantal').innerText = aantalProducten;
+
+            // Drankkosten tonen als ze niet in het arrangement zitten
+            let drankTotaal = 0;
+            if (drankjesBetaald()) {
+                for (let id in mandje) {
+                    const item = menuItems.find(p => p.id === id);
+                    if (!item) continue;
+                    const prijs = drankPrijs(item.naam);
+                    if (item.categorie === 'drankje' && prijs !== undefined) drankTotaal += prijs * mandje[id];
+                }
+            }
+            document.getElementById('mand-extra').innerHTML = drankTotaal > 0
+                ? `<div class="mand-extra"><span>Drankjes (niet inbegrepen)</span><span>${euro(drankTotaal)}</span></div>`
+                : '';
+
+            updateMandBalk(aantalProducten);
+            updateBestelKnop();
+            updateRondeInfo();
+        }
+
+        function updateBestelKnop() {
+            const knop = document.getElementById('bestel-knop');
+            const leeg = Object.keys(mandje).length === 0;
+            knop.disabled = leeg || tijdIsOm();
+            knop.innerText = tijdIsOm() ? 'Tijd is om: verleng om te bestellen' : '¡Pedir Ahora! (Bestel)';
+        }
+
+        // ===== Telefoon: balk onderin en mandje als onderblad =====
+        let vorigAantalInBalk = 0;
+        let balkMeldingTimer = null;
+
+        function updateMandBalk(aantal) {
+            const balk = document.getElementById('mand-balk');
+            if (!balk) return;
+            document.getElementById('mand-balk-aantal').innerText = aantal;
+            if (!balkMeldingTimer) {
+                document.getElementById('mand-balk-tekst').innerText =
+                    aantal === 0 ? 'Tik op + om iets te kiezen' : (aantal === 1 ? '1 item gekozen' : `${aantal} items gekozen`);
+            }
+            balk.classList.toggle('leeg', aantal === 0);
+
+            // Klein "tikje" als er iets bij komt, zodat je ziet dat het gelukt is
+            if (aantal > vorigAantalInBalk) {
+                balk.classList.remove('bump');
+                void balk.offsetWidth;
+                balk.classList.add('bump');
+            }
+            vorigAantalInBalk = aantal;
+            if (aantal === 0) sluitMandSheet();
+        }
+
+        function toonBalkMelding(tekst) {
+            const tekstEl = document.getElementById('mand-balk-tekst');
+            if (!tekstEl) return;
+            clearTimeout(balkMeldingTimer);
+            tekstEl.innerText = tekst;
+            balkMeldingTimer = setTimeout(() => {
+                balkMeldingTimer = null;
+                updateMandBalk(vorigAantalInBalk);
+            }, 3000);
+        }
+
+        function openMandSheet() {
+            if (vorigAantalInBalk === 0) return;
+            document.getElementById('mandje').classList.add('open');
+            document.getElementById('mand-achtergrond').classList.add('open');
+        }
+
+        function sluitMandSheet() {
+            const mandjeEl = document.getElementById('mandje');
+            if (!mandjeEl) return;
+            mandjeEl.classList.remove('open');
+            document.getElementById('mand-achtergrond').classList.remove('open');
+        }
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') sluitMandSheet(); });
+
+        function plaatsBestelling() {
+            let bestellingTekstOmschrijving = [];
+            for (let id in mandje) {
+                const item = menuItems.find(p => p.id === id);
+                if (item) bestellingTekstOmschrijving.push(`${mandje[id]}x ${item.naam}`);
+            }
+
+            const payload = {
+                tafel: parseInt(tafelNummer),
+                gast: huidigeGastNaam,
+                gezelschap: `${aantalVolw} volw, ${aantalSenioren} sen, ${aantalKind} kind`,
+                gerecht: bestellingTekstOmschrijving.join(', '),
+                opmerking: document.getElementById('opmerking').value.trim(),
+                pakket: gekozenPakket
+            };
+
+            const melding = document.getElementById('melding');
+            melding.style.color = 'var(--grijs)';
+            melding.innerText = 'Bestelling versturen...';
+
+            fetch('bestelling.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                cache: 'no-store'
+            })
+            .then(res => res.text().then(tekst => ({ status: res.status, tekst })))
+            .then(({ status, tekst }) => {
+                let data;
+                try {
+                    data = JSON.parse(tekst);
+                } catch (e) {
+                    // De server stuurde geen geldige JSON terug: toon wat er wél kwam
+                    throw new Error(`Server gaf onverwacht antwoord (HTTP ${status}): ${tekst.replace(/<[^>]*>/g, ' ').trim().slice(0, 150)}`);
+                }
+
+                if (data.succes) {
+                    melding.style.color = '#2a9d8f';
+                    melding.innerText = '¡Olé! Bestelling verzonden naar de keuken!';
+                    mandje = {};
+                    document.getElementById('opmerking').value = '';
+                    if (data.tafel) tafelInfo = data.tafel;
+                    renderMandje();
+                    sluitMandSheet();
+                    toonBalkMelding('✅ Verstuurd naar de keuken!');
+                    if (data.tafel) { tafelInfo = data.tafel; updateTijdBalk(); }
+                    laadVoorraadData();
+                    setTimeout(() => melding.innerText = '', 3500);
+                } else {
+                    melding.style.color = '#b8383b';
+                    melding.innerText = data.melding || 'Fout bij bestellen.';
+                    laadVoorraadData();
+                    laadTafelInfo();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                melding.style.color = '#b8383b';
+                melding.innerText = (err && err.message && err.message.startsWith('Server'))
+                    ? err.message
+                    : 'Kan de server niet bereiken. Controleer of je op hetzelfde WiFi zit als de PC. (' + (err.message || err) + ')';
+            });
+        }
+
+        function laadTafelBestellingen() {
+            fetch(`bestelling.php?tafel=${tafelNummer}&_=` + Date.now(), { cache: 'no-store' })
+                .then(res => res.json())
+                .then(data => {
+                    const lijstContainer = document.getElementById('mijn-bestellingen-lijst');
+                    const bestellingenLijst = Array.isArray(data) ? data : (data.bestellingen || []);
+                    const tafelBestellingen = bestellingenLijst.filter(b => parseInt(b.tafel) === parseInt(tafelNummer));
+
+                    if (!tafelBestellingen || tafelBestellingen.length === 0) {
+                        lijstContainer.innerHTML = '<p style="color: var(--grijs); font-style: italic;">Nog geen bestellingen geplaatst vanuit deze tafel.</p>';
+                        return;
+                    }
+
+                    lijstContainer.innerHTML = tafelBestellingen.map(b => {
+                        let statusLower = (b.status || '').toLowerCase();
+                        let statusTekst = '';
+                        let kleur = '#e09f3e';
+
+                        if (statusLower === 'bezig' || statusLower === 'in behandeling') {
+                            statusTekst = '🔥 In behandeling bij de keuken';
+                            kleur = '#e09f3e';
+                        } else if (statusLower === 'klaar' || statusLower === 'geserveerd') {
+                            statusTekst = '✅ Klaar voor bezorging';
+                            kleur = '#2a9d8f';
+                        } else if (statusLower === 'onderweg') {
+                            statusTekst = '🚀 Onderweg naar jouw tafel';
+                            kleur = '#3a86ef';
+                        } else if (statusLower === 'bezorgd') {
+                            statusTekst = '🍽️ Bezorgd / Eet smakelijk!';
+                            kleur = '#38b000';
+                        } else {
+                            statusTekst = `🔥 Status: ${b.status}`;
+                            kleur = '#7a6b63';
+                        }
+
+                        return `
+                            <div class="bestelling-kaart" style="border-left: 5px solid ${kleur};">
+                                <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px;">
+                                    <span>Tijd: ${esc(b.tijd || 'Onbekend')}</span>
+                                    <span style="color: ${kleur};">${statusTekst}</span>
+                                </div>
+                                <div style="font-size: 0.95rem; color: var(--inkt);">
+                                    ${esc(b.gerecht)}
+                                    ${Number(b.aangepast) ? `<div style="font-size: 0.8rem; color: #6c3483; font-weight: bold; margin-top: 4px;">✏️ Aangepast door de keuken</div>` : ''}
+                                    ${b.opmerking ? `<div style="font-size: 0.8rem; color: var(--grijs); margin-top: 4px;">📝 ${esc(b.opmerking)}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                })
+                .catch(err => {
+                    console.error('Fout bij laden bestellingen:', err);
+                });
+        }
+
+        setInterval(() => {
+            const bestellingenTab = document.getElementById('tab-bestellingen');
+            if (bestellingenTab.classList.contains('active')) {
+                laadTafelBestellingen();
+            } else {
+                laadVoorraadData();
+            }
+            if (!betaalPollInterval && huidigeGastNaam && !reviewGetoond) laadTafelInfo();
+        }, 6000);
+    </script>
+</body>
+</html>
